@@ -3,7 +3,7 @@
 Status: Draft
 
 ## Summary
-Creators can delete a short link so it no longer sends visitors to its saved destination. The alias remains reserved and the creator's list marks it deleted. Link Resolution uses that deleted state to show visitors a tombstone.
+Creators can delete a short link so it no longer sends visitors to its saved destination. The alias remains reserved, the link disappears from the active list, and Link Resolution uses the deleted state to show visitors a tombstone.
 
 ## Why this matters
 People may keep or share short links after deletion. A tombstone tells them the link was deliberately removed instead of making it look mistyped or never created. Keeping the alias reserved prevents an old shared link from silently pointing to an unrelated destination.
@@ -15,7 +15,7 @@ People may keep or share short links after deletion. A tombstone tells them the 
 ## Scenarios
 - A creator deletes an active short link.
 - A creator selects one of their links from the link list and deletes it.
-- The creator's link list marks a deleted link as no longer active.
+- The deleted link no longer appears in the active link list.
 - Someone attempts to assign the deleted alias to another destination and is told that the alias is unavailable.
 
 ## Scope
@@ -24,16 +24,15 @@ People may keep or share short links after deletion. A tombstone tells them the 
 
 ## Acceptance criteria
 - **AC-1:** Given an active short link, when its creator deletes it, then deletion succeeds and future visits no longer redirect to its saved destination.
-- **AC-2:** Given a deleted short link, when the creator views their link list, then the link is marked deleted and its removed destination is not displayed.
+- **AC-2:** Given a deleted short link, when the creator views the active link list, then the deleted link is no longer included.
 - **AC-3:** Given a deleted short link, when someone attempts to create another link with the same alias regardless of casing, then the alias remains unavailable.
 - **AC-4:** Given an alias that was never assigned, when it is requested, then it is treated as not found rather than as a deleted link.
 
 ## Behavioral test cases
-- **TC-1:** Delete an active link → deletion succeeds and the creator's list marks it deleted.
-- **TC-2:** Delete a link → the list does not display its removed destination.
-- **TC-3:** Delete a link, then submit its alias for a new link with different casing → creation is rejected because the alias remains reserved.
-- **TC-4:** Request an alias that was never assigned → receive the ordinary not-found result, not the tombstone.
-- **TC-5:** Delete an already deleted link → return a consistent not-found or already-deleted result without restoring or reassigning the alias. (Exact response is an open question.)
+- **TC-1:** Delete an active link → deletion succeeds and the link disappears from the active list.
+- **TC-2:** Delete a link, then submit its alias for a new link with different casing → creation is rejected because the alias remains reserved.
+- **TC-3:** Request an alias that was never assigned → receive the ordinary not-found result, not the tombstone.
+- **TC-4:** Delete an already deleted link → return a consistent not-found or already-deleted result without restoring or reassigning the alias. (Exact response is an open question.)
 
 ## Constraints, assumptions, and open questions
 - Deleted aliases remain reserved permanently, following [ADR 0003](../../adr/0003-use-normalized-alias-as-short-link-primary-key.md).
