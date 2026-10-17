@@ -1,4 +1,5 @@
 import ConnectionStatus from "@/app/ConnectionStatus";
+import ShortLinkForm from "@/app/ShortLinkForm";
 
 export default function Home() {
   return (
@@ -10,14 +11,7 @@ export default function Home() {
         <p className="description">
           Your link management workspace is ready. Create a short link to get started.
         </p>
-        <form className="shorten-form">
-          <label htmlFor="fullUrl">Long URL</label>
-          <div className="form-row">
-            <input id="fullUrl" name="fullUrl" type="url" placeholder="https://example.com/your-long-link" />
-            <button type="button" disabled>Create short link</button>
-          </div>
-          <p className="setup-note">Connection status checks the API every five seconds.</p>
-        </form>
+        <ShortLinkForm />
       </section>
       <footer>API and frontend are separate apps, connected through the REST contract.</footer>
     </main>

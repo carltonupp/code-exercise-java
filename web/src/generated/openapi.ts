@@ -80,6 +80,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description RFC 9457 problem details. Use type for problem-specific client behavior. */
+        Problem: {
+            /**
+             * Format: uri
+             * @description Stable problem identifier. Application-defined types use urn:urlshortener:problem:<name>.
+             * @example urn:urlshortener:problem:alias-in-use
+             */
+            type: string;
+            /** @example Alias already in use */
+            title: string;
+            /** @example 400 */
+            status: number;
+            /** @example This alias has already been assigned. Choose another. */
+            detail: string;
+            /**
+             * Format: uri-reference
+             * @description The request path where the problem occurred.
+             * @example /shorten
+             */
+            instance: string;
+            /** @description Individual field-validation errors, when applicable. */
+            errors?: components["schemas"]["ValidationError"][];
+        };
+        ValidationError: {
+            /** @example customAlias */
+            field: string;
+            /** @example Must contain between 3 and 16 characters. */
+            message: string;
+        };
         HealthResponse: {
             /** @enum {string} */
             status: "UP" | "DOWN" | "OUT_OF_SERVICE" | "UNKNOWN";
@@ -124,7 +153,17 @@ export interface components {
          */
         Alias: string;
     };
-    responses: never;
+    responses: {
+        /** @description The request could not be completed */
+        ProblemResponse: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+    };
     parameters: never;
     requestBodies: never;
     headers: never;
@@ -174,20 +213,25 @@ export interface operations {
                     "application/json": components["schemas"]["ShortenResponse"];
                 };
             };
-            /** @description Invalid destination or alias, or the alias is already in use */
+            /** @description Invalid destination or alias, or the alias is already in use. Problem types are validation-failed, invalid-request, and alias-in-use under urn:urlshortener:problem:. */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
-            /** @description Could not allocate a generated alias after repeated collisions */
+            /** @description Could not allocate a generated alias after repeated collisions (urn:urlshortener:problem:alias-generation-exhausted), or the proxy could not reach the API (urn:urlshortener:problem:service-unavailable). */
             503: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
+            default: components["responses"]["ProblemResponse"];
         };
     };
     redirectToUrl: {

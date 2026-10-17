@@ -5,9 +5,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ShortLinkService {
@@ -46,28 +44,27 @@ public class ShortLinkService {
         || fullUrl.getHost() == null
         || !("http".equalsIgnoreCase(fullUrl.getScheme())
             || "https".equalsIgnoreCase(fullUrl.getScheme()))) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "fullUrl must be an absolute HTTP or HTTPS URL");
+      throw ApiProblems.invalidField("fullUrl", "Must be an absolute HTTP or HTTPS URL.");
     }
   }
 
   private void validateAlias(String alias) {
     if (!ALIAS_PATTERN.matcher(alias).matches()) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "customAlias must be 3–16 ASCII letters, numbers, or hyphens");
+      throw ApiProblems.invalidField(
+          "customAlias", "Must contain 3–16 ASCII letters, numbers, or hyphens.");
     }
   }
 
   private void saveCustomAlias(String alias, URI fullUrl) {
     String aliasKey = canonicalAlias(alias);
     if (repository.existsById(aliasKey)) {
-      throw aliasAlreadyInUse();
+      throw ApiProblems.aliasInUse();
     }
     try {
       repository.saveAndFlush(new ShortUrl(aliasKey, alias, fullUrl));
     } catch (DataIntegrityViolationException exception) {
       if (repository.existsById(aliasKey)) {
-        throw aliasAlreadyInUse();
+        throw ApiProblems.aliasInUse();
       }
       throw exception;
     }
@@ -95,8 +92,7 @@ public class ShortLinkService {
       }
     }
 
-    throw new ResponseStatusException(
-        HttpStatus.SERVICE_UNAVAILABLE, "Could not allocate a unique alias; please try again");
+    throw ApiProblems.aliasGenerationExhausted();
   }
 
   private URI shortUrlFor(String alias) {
@@ -105,9 +101,5 @@ public class ShortLinkService {
 
   private String canonicalAlias(String alias) {
     return alias.toLowerCase(Locale.ROOT);
-  }
-
-  private ResponseStatusException aliasAlreadyInUse() {
-    return new ResponseStatusException(HttpStatus.BAD_REQUEST, "Alias is already in use");
   }
 }

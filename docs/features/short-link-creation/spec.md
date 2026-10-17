@@ -15,14 +15,13 @@ Users can create a short link for a URL. They may provide a custom alias, or lea
 
 ## Scope
 - Included: create short links for valid URLs; accept optional custom aliases; generate an alias when omitted; enforce alias length, character, and uniqueness rules; show the resulting short link or an error.
-- Excluded: link analytics, expiry, editing, authentication, and other link management features.
+- Excluded: redirect resolution, link analytics, expiry, editing, authentication, and other link management features.
 
 ## Acceptance criteria
 - **AC-1:** Given a valid URL and no custom alias, when the user submits it, then a short link is created with a unique, randomly generated 8-character lowercase alphanumeric alias and shown to the user.
 - **AC-2:** Given a valid URL and a unique custom alias of 3–16 ASCII letters (`A–Z`, `a–z`), numbers, or hyphens, when the user submits it, then a short link using that alias is created and shown.
 - **AC-3:** Given an alias shorter than 3 characters, longer than 16 characters, containing any character other than an ASCII letter, number, or hyphen (including accented letters), or already in use regardless of letter casing, when submitted, then no link is created and the user sees a clear error.
-- **AC-4:** Given a created short link, when opened, then it redirects to the original URL.
-- **AC-5:** Given an invalid URL, when submitted, then no link is created and the user sees a clear error.
+- **AC-4:** Given an invalid URL, when submitted, then no link is created and the user sees a clear error.
 
 ## Behavioral test cases
 - **TC-1:** Submit a valid URL with no alias → receive and display a generated short link with an 8-character lowercase alphanumeric alias.
@@ -32,7 +31,6 @@ Users can create a short link for a URL. They may provide a custom alias, or lea
 - **TC-5:** Submit an alias containing punctuation, whitespace, or an accented letter → show a validation error and create no link.
 - **TC-6:** Submit an alias that is already in use, including one that differs from an existing alias only by letter casing → show an error and create no link.
 - **TC-7:** Submit an invalid URL → show a validation error and create no link.
-- **TC-8:** Open a created short link → redirect to the original URL.
 
 ## Constraints, assumptions, and open questions
 - Custom aliases contain only ASCII `A–Z`, `a–z`, `0–9`, and `-`. Preserve the casing supplied by the user for display, but treat aliases that differ only by letter casing as the same alias.

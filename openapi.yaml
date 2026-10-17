@@ -44,9 +44,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/ShortenResponse'
         '400':
-          description: Invalid destination or alias, or the alias is already in use
+          description: >-
+            Invalid destination or alias, or the alias is already in use.
+            Problem types are validation-failed, invalid-request, and alias-in-use
+            under urn:urlshortener:problem:.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '503':
-          description: Could not allocate a generated alias after repeated collisions
+          description: >-
+            Could not allocate a generated alias after repeated collisions
+            (urn:urlshortener:problem:alias-generation-exhausted), or the proxy
+            could not reach the API (urn:urlshortener:problem:service-unavailable).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        default:
+          $ref: '#/components/responses/ProblemResponse'
 
   /{alias}:
     get:
@@ -100,7 +116,62 @@ paths:
                   $ref: '#/components/schemas/UrlEntry'
 
 components:
+  responses:
+    ProblemResponse:
+      description: The request could not be completed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
   schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details. Use type for problem-specific client behavior.
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+      properties:
+        type:
+          type: string
+          format: uri
+          description: Stable problem identifier. Application-defined types use urn:urlshortener:problem:<name>.
+          example: urn:urlshortener:problem:alias-in-use
+        title:
+          type: string
+          example: Alias already in use
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+          example: 400
+        detail:
+          type: string
+          example: This alias has already been assigned. Choose another.
+        instance:
+          type: string
+          format: uri-reference
+          description: The request path where the problem occurred.
+          example: /shorten
+        errors:
+          type: array
+          description: Individual field-validation errors, when applicable.
+          items:
+            $ref: '#/components/schemas/ValidationError'
+    ValidationError:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          example: customAlias
+        message:
+          type: string
+          example: Must contain between 3 and 16 characters.
     HealthResponse:
       type: object
       required:
