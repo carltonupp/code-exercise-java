@@ -44,3 +44,8 @@
 - For each task, add focused tests for its observable behavior and run that task's relevant checks before presenting the task for review. Do not begin the next task until the user approves the review handoff.
 - At integration, validate API formatting and tests, frontend tests/lint/typecheck/build, and the end-to-end creation flow with the configured API base URL.
 - If the externally visible short URL origin cannot be implemented from existing configuration, surface that as a decision before starting the dependent task.
+
+## Completion evidence
+- T1–T3 are implemented: the OpenAPI contract and generated types, API creation flow, and web form/proxy are complete.
+- API formatting, contract validation, and tests passed. Frontend tests (22), lint, typecheck, and production build passed.
+- Compose end-to-end check passed: `/api/health` returned 200, and `POST /api/shorten` through the web proxy returned 201 with a generated short URL.

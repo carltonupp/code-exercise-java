@@ -1,6 +1,6 @@
 # Short Link Creation — Product Specification
 
-Status: Draft
+Status: Implemented
 
 ## Summary
 Users can create a short link for a URL. They may provide a custom alias, or leave it blank and have one generated for them.
