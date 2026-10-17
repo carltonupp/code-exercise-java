@@ -9,9 +9,9 @@ Users may omit a custom alias and still need a short link. Generated aliases mus
 With lowercase letters and digits, an eight-character alias has `36^8 = 2,821,109,907,456` possible values. At one million existing aliases, the chance that one random candidate is already occupied is about 1 in 2.8 million. At ten million, it is about 1 in 282,000. These are candidate collision probabilities; checking uniqueness and retrying means a collision does not create a duplicate.
 
 ## Decision
-When no custom alias is supplied, generate an alias by selecting eight characters uniformly at random from `abcdefghijklmnopqrstuvwxyz0123456789`. Check uniqueness using the case-insensitive alias rule. If the candidate is already in use, generate another candidate and retry. Only return a link after its alias has been saved successfully.
+When no custom alias is supplied, generate an alias by selecting eight characters uniformly at random from `abcdefghijklmnopqrstuvwxyz0123456789`. Check uniqueness using the case-insensitive alias rule. If the candidate is already in use, generate another candidate and retry, up to ten candidates for a request. Only return a link after its alias has been saved successfully. If all ten candidates collide, return a temporary service error so the caller can retry later.
 
-Instrument generated alias allocation with two OpenTelemetry monotonic counters: `urlshortener.alias.generation.collisions` increments for each occupied candidate, and `urlshortener.alias.generation.successes` increments after a generated alias is successfully persisted. These counters cover generated aliases only, not user-supplied aliases. Do not attach the alias itself or other high-cardinality values as metric attributes. Use the collision-to-success trend to assess when the alias length or generation approach needs to change.
+Instrument generated alias allocation with Micrometer counters, exported through OTLP: `urlshortener.alias.generation.collisions` increments for each occupied candidate, and `urlshortener.alias.generation.successes` increments for each available candidate successfully persisted. These counters cover generated aliases only, not user-supplied aliases. Calculate the candidate collision rate as `collisions / (collisions + successes)` over the same time window. Do not attach the alias itself or other high-cardinality values as metric tags. Use the collision rate trend to assess when the alias length or generation approach needs to change.
 
 ## Alternatives considered
 - **Sequential aliases:** simple and collision-free, but expose approximate creation order and volume.
@@ -19,5 +19,5 @@ Instrument generated alias allocation with two OpenTelemetry monotonic counters:
 - **Shorter random aliases:** use fewer characters, but occupy the alias space more quickly and increase retry frequency.
 
 ## Consequences
-- Positive: Generated links are compact, unpredictable, and use the same lowercase alphanumeric character set as the custom alias rules. The collision and success counters make growth in retry frequency visible.
-- Tradeoffs: Random collisions remain possible and must be handled with uniqueness enforcement and retries. The alias space is finite and collision retries become more frequent as it fills; metrics show this trend but do not themselves prevent exhaustion.
+- Positive: Generated links are compact, unpredictable, and use the same lowercase alphanumeric character set as the custom alias rules. The counters show the percentage of generated candidates that collide.
+- Tradeoffs: Random collisions remain possible and must be handled with uniqueness enforcement and retries. The alias space is finite and collision retries become more frequent as it fills; metrics show this trend but do not themselves prevent exhaustion. Ten consecutive collisions fail that request and require a later retry or a future generator change.

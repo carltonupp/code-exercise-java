@@ -4,7 +4,7 @@
 | ID | Outcome and acceptance criteria | Dependencies | Area/owner | Parallelizable | Completion evidence |
 |---|---|---|---|---|---|
 | T1 | Finalize the API contract for creation: required URL, optional alias with 3–16 ASCII character and allowed-character constraints, case-insensitive uniqueness, success response, and invalid/conflict response behavior (AC-1–AC-3, AC-5). Generate the Java and TypeScript contract artifacts from the source contract. | — | OpenAPI contract and generated clients | No | Contract validation and generated types represent optional alias and creation responses/errors. |
-| T2 | Implement API persistence and creation. Validate HTTP(S) destinations, accept a valid unused custom alias, generate an 8-character lowercase alphanumeric alias when omitted, prevent duplicates even when aliases differ only by case, track generated-alias collisions and successes, and return the created short link (AC-1–AC-3, AC-5). | T1 | API | No | API checks cover generated/custom creation, alias boundaries and character rules, case-insensitive duplicates, invalid URLs, and persistence across requests; telemetry exposes generated alias collision and success counters. |
+| T2 | Implement API persistence and creation. Validate HTTP(S) destinations, accept a valid unused custom alias, generate an 8-character lowercase alphanumeric alias when omitted, prevent duplicates even when aliases differ only by case, track generated-alias collisions and successes, and return the created short link (AC-1–AC-3, AC-5). Retry up to ten generated candidates, then return 503. | T1 | API | No | API behavior covers generated/custom creation, alias boundaries and character rules, case-insensitive duplicates, invalid URLs, and persistence across requests; telemetry exposes generated alias collision and success counters. |
 | T3 | Implement redirect lookup for created aliases (AC-4). | T2 | API | No | API check confirms a created alias redirects to its saved destination and unknown aliases return not found. |
 | T4 | Add the web creation flow: URL input, optional alias input, submission state, success result, and understandable validation/conflict/network errors (AC-1–AC-3, AC-5). Route the browser request through a Next.js API handler using the configured server-side API base URL. | T1, T2 | Web and API integration | No | Web checks cover successful generated/custom alias flow, validation and conflict errors, and API unavailability; manual run confirms browser requests work in the configured local/Compose setup. |
 
@@ -18,12 +18,16 @@
 
 ### T2 — Creation and persistence
 - Store alias-to-destination mappings persistently so a created short link remains usable after later requests or API restarts.
+- Keep random character selection in a dedicated `AliasGenerator`; cover its output length and alphabet with unit tests. Keep collision checking and persistence in the service.
+- Persist a canonical lowercase alias key as the unique primary key and keep the selected alias separately for display; resolve lookups with the same canonicalization.
+- Keep the creation controller scoped to its generated OpenAPI interface so it does not require implementing unrelated list/delete operations in this feature.
 - Preserve permanent alias reservation: future link retirement or deletion must not make an assigned alias available again. Do not add retirement/deletion behavior in this feature.
 - Follow [ADR 0002](../../adr/0002-random-generated-aliases.md) for generated alias length, alphabet, random selection, and collision retries.
-- Emit the two OpenTelemetry counters defined in ADR 0002. Count collisions per occupied candidate and successes after persistence; exclude custom aliases and do not add alias values as metric attributes.
+- Emit the Micrometer counters defined in ADR 0002 for OTLP export. Count occupied candidates and successfully persisted generated aliases; exclude custom aliases and do not add alias values as metric tags.
+- Build response URLs from `shortener.public-base-url`, configurable with `SHORT_URL_BASE_URL`; default to `http://localhost:8080` for local development and Compose.
 - Normalize aliases for uniqueness checks so case-only variations conflict, while preserving the user's chosen casing in the short link.
 - Keep uniqueness enforcement at the persistence boundary so concurrent attempts cannot create two links with aliases that match regardless of case.
-- For generated aliases, retry collisions and return an internal error only if the system cannot find an available alias.
+- For generated aliases, retry up to ten occupied candidates and return 503 if all attempts collide.
 - Return client errors for invalid destination URLs, malformed aliases, and aliases already in use; do not persist rejected requests.
 - Build the returned short URL from the externally visible API origin/configuration, not an internal Compose hostname.
 

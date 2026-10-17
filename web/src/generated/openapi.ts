@@ -181,6 +181,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Could not allocate a generated alias after repeated collisions */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     redirectToUrl: {

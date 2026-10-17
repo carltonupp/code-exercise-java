@@ -23,7 +23,7 @@ paths:
     post:
       operationId: shortenUrl
       tags:
-        - Urls
+        - ShortLinkCreation
       summary: Shorten a URL
       description: >-
         Create a short URL for an absolute HTTP or HTTPS destination. If customAlias is omitted,
@@ -45,12 +45,14 @@ paths:
                 $ref: '#/components/schemas/ShortenResponse'
         '400':
           description: Invalid destination or alias, or the alias is already in use
+        '503':
+          description: Could not allocate a generated alias after repeated collisions
 
   /{alias}:
     get:
       operationId: redirectToUrl
       tags:
-        - Urls
+        - ShortLinkRedirect
       summary: Redirect to full URL
       parameters:
         - name: alias
