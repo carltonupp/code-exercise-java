@@ -34,7 +34,11 @@ export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: num
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<LinkListResponse | null>(null);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [deletingAlias, setDeletingAlias] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -71,7 +75,30 @@ export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: num
 
     void loadLinks();
     return () => controller.abort();
-  }, [page, refreshToken]);
+  }, [page, refreshToken, reloadToken]);
+
+  async function deleteLink(alias: string) {
+    setDeletingAlias(alias);
+    setActionError("");
+    setNotice("");
+    try {
+      const response = await fetch(`/api/urls/${encodeURIComponent(alias)}`, {
+        method: "DELETE",
+        cache: "no-store",
+      });
+      if (response.status !== 204) {
+        const body: unknown = await response.json().catch(() => null);
+        setActionError(problemDetail(body));
+        return;
+      }
+      setNotice(`Deleted ${alias}.`);
+      setReloadToken((current) => current + 1);
+    } catch {
+      setActionError("The link could not be deleted. Please try again.");
+    } finally {
+      setDeletingAlias("");
+    }
+  }
 
   return (
     <section className="link-list" aria-labelledby="links-title">
@@ -87,6 +114,8 @@ export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: num
 
       {isLoading && <p className="list-message" role="status">Loading links…</p>}
       {error && <p className="list-error" role="alert">{error}</p>}
+      {actionError && <p className="list-error" role="alert">{actionError}</p>}
+      {notice && <p className="list-success" role="status">{notice}</p>}
       {!isLoading && !error && result?.totalItems === 0 && (
         <div className="empty-links">
           <h3>No active links yet</h3>
@@ -110,6 +139,16 @@ export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: num
                 <div className="link-entry-value destination-value">
                   <span>Destination</span>
                   <a href={link.fullUrl} target="_blank" rel="noreferrer">{link.fullUrl}</a>
+                </div>
+                <div className="link-entry-actions">
+                  <button
+                    type="button"
+                    className="delete-link-button"
+                    onClick={() => void deleteLink(link.alias)}
+                    disabled={Boolean(deletingAlias) || isLoading}
+                  >
+                    {deletingAlias === link.alias ? "Deleting…" : "Delete"}
+                  </button>
                 </div>
               </li>
             ))}

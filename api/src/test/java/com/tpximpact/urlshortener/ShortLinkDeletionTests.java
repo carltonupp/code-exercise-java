@@ -3,7 +3,9 @@ package com.tpximpact.urlshortener;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +46,22 @@ class ShortLinkDeletionTests {
 
     assertEquals(HttpStatus.NOT_FOUND, unknown.getStatusCode());
     assertEquals(HttpStatus.NOT_FOUND, repeated.getStatusCode());
+  }
+
+  @Test
+  void deletedAliasRemainsReservedRegardlessOfCasing() {
+    ShortUrlRepository repository = mock(ShortUrlRepository.class);
+    when(repository.existsById("gone")).thenReturn(true);
+    ShortLinkService service = service(repository);
+
+    ErrorResponseException exception =
+        assertThrows(
+            ErrorResponseException.class,
+            () -> service.create(URI.create("https://example.com/new"), "GONE"));
+
+    assertEquals(
+        URI.create("urn:urlshortener:problem:alias-in-use"), exception.getBody().getType());
+    verify(repository, never()).saveAndFlush(any(ShortUrl.class));
   }
 
   private ShortLinkService service(ShortUrlRepository repository) {

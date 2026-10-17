@@ -100,4 +100,42 @@ describe("ShortLinkList", () => {
     expect(await screen.findByText("first-link")).toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
+
+  it("deletes immediately, shows success, and removes the link from the active list", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(listResponse([firstLink]))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(listResponse([], 1, 0, 0));
+    vi.stubGlobal("fetch", fetchMock);
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    render(<ShortLinkList />);
+    expect(await screen.findByText("first-link")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Deleted first-link.")).toBeInTheDocument();
+    expect(await screen.findByText("No active links yet")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/urls/first-link",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(confirmSpy).not.toHaveBeenCalled();
+  });
+
+  it("keeps the link visible when deletion fails", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(listResponse([firstLink]))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        detail: "The service is unavailable.",
+      }), { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ShortLinkList />);
+    expect(await screen.findByText("first-link")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The service is unavailable.");
+    expect(screen.getByText("first-link")).toBeInTheDocument();
+  });
 });

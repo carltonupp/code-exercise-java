@@ -20,7 +20,7 @@ export default function Home() {
         <a className="links-shortcut" href="#links-title">View existing links ↓</a>
         <ShortLinkForm onCreated={() => setRefreshToken((current) => current + 1)} />
       </section>
-      <ShortLinkList refreshToken={refreshToken} />
+      <ShortLinkList key={refreshToken} refreshToken={refreshToken} />
       <footer>API and frontend are separate apps, connected through the REST contract.</footer>
     </main>
   );
