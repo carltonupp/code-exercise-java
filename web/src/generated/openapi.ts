@@ -30,7 +30,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Shorten a URL */
+        /**
+         * Shorten a URL
+         * @description Create a short URL for an absolute HTTP or HTTPS destination. If customAlias is omitted, the service generates an eight-character lowercase alphanumeric alias. Aliases are case-insensitive and are never reused. A custom alias must be unique and contain 3–16 ASCII letters, numbers, or hyphens.
+         */
         post: operations["shortenUrl"];
         delete?: never;
         options?: never;
@@ -84,11 +87,15 @@ export interface components {
         ShortenRequest: {
             /**
              * Format: uri
+             * @description Absolute HTTP or HTTPS URL to shorten.
              * @example https://example.com/very/long/url
              */
             fullUrl: string;
-            /** @example my-custom-alias */
-            customAlias?: string;
+            /**
+             * @description Optional case-insensitive custom alias. Omit to generate an alias.
+             * @example my-custom-alias
+             */
+            customAlias?: components["schemas"]["Alias"];
         };
         ShortenResponse: {
             /**
@@ -99,7 +106,7 @@ export interface components {
         };
         UrlEntry: {
             /** @example my-custom-alias */
-            alias: string;
+            alias: components["schemas"]["Alias"];
             /**
              * Format: uri
              * @example https://example.com/very/long/url
@@ -111,6 +118,11 @@ export interface components {
              */
             shortUrl: string;
         };
+        /**
+         * @description Case-insensitive alias using 3–16 ASCII letters, numbers, or hyphens.
+         * @example my-custom-alias
+         */
+        Alias: string;
     };
     responses: never;
     parameters: never;
@@ -162,7 +174,7 @@ export interface operations {
                     "application/json": components["schemas"]["ShortenResponse"];
                 };
             };
-            /** @description Invalid input or alias already taken */
+            /** @description Invalid destination or alias, or the alias is already in use */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -176,7 +188,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                alias: string;
+                alias: components["schemas"]["Alias"];
             };
             cookie?: never;
         };
@@ -203,7 +215,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                alias: string;
+                alias: components["schemas"]["Alias"];
             };
             cookie?: never;
         };

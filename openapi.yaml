@@ -25,6 +25,11 @@ paths:
       tags:
         - Urls
       summary: Shorten a URL
+      description: >-
+        Create a short URL for an absolute HTTP or HTTPS destination. If customAlias is omitted,
+        the service generates an eight-character lowercase alphanumeric alias. Aliases are
+        case-insensitive and are never reused. A custom alias must be unique and contain 3–16
+        ASCII letters, numbers, or hyphens.
       requestBody:
         required: true
         content:
@@ -39,7 +44,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ShortenResponse'
         '400':
-          description: Invalid input or alias already taken
+          description: Invalid destination or alias, or the alias is already in use
 
   /{alias}:
     get:
@@ -52,7 +57,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            $ref: '#/components/schemas/Alias'
       responses:
         '302':
           description: Redirect to the original URL
@@ -69,7 +74,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            $ref: '#/components/schemas/Alias'
       responses:
         '204':
           description: Successfully deleted
@@ -114,9 +119,12 @@ components:
         fullUrl:
           type: string
           format: uri
+          description: Absolute HTTP or HTTPS URL to shorten.
           example: https://example.com/very/long/url
         customAlias:
-          type: string
+          allOf:
+            - $ref: '#/components/schemas/Alias'
+          description: Optional case-insensitive custom alias. Omit to generate an alias.
           example: my-custom-alias
     ShortenResponse:
       type: object
@@ -135,7 +143,7 @@ components:
         - shortUrl
       properties:
         alias:
-          type: string
+          $ref: '#/components/schemas/Alias'
           example: my-custom-alias
         fullUrl:
           type: string
@@ -145,3 +153,10 @@ components:
           type: string
           format: uri
           example: http://localhost:8080/my-custom-alias
+    Alias:
+      type: string
+      minLength: 3
+      maxLength: 16
+      pattern: '^[A-Za-z0-9-]+$'
+      description: Case-insensitive alias using 3–16 ASCII letters, numbers, or hyphens.
+      example: my-custom-alias
