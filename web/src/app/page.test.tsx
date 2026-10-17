@@ -39,6 +39,10 @@ describe("Home link workspace", () => {
 
     render(<Home />);
     expect(await screen.findByText("No active links yet")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View existing links ↓" })).toHaveAttribute(
+      "href", "#links-title",
+    );
+    expect(document.getElementById("links-title")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Long URL"), {
       target: { value: "https://example.com/page" },
