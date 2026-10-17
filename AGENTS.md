@@ -18,6 +18,10 @@ Compose requires Docker with the Compose plugin. Its named `api-data` volume hol
 
 Treat root `openapi.yaml` as the API contract. Generate Java Spring interfaces and models with `cd api && ./gradlew openApiGenerate`; Gradle generates them under `api/build/generated/openapi/` and compiles them with the API. Implement API controllers against the generated interfaces so contract changes surface as compile errors. Gradle validates the contract during API tests. Generate the frontend API client with `cd web && npm run api:generate`; `predev` and `prebuild` run generation automatically. The client and its types live in `web/src/generated/`; do not edit generated files by hand.
 
+## Spec-Driven Development Workflow
+
+For requests that span discovery through full-stack implementation, use `.agents/skills/spec-driven-development/SKILL.md`. It defines the product-spec, task-plan, ADR, parallel work, validation, and code-review handoff conventions. Feature specs and plans belong under `docs/features/<slug>/`; accepted architectural decisions belong under `docs/adr/`. Implement in planned subtasks, then stop after each one for user review and explicit approval before committing it with a Conventional Commit message. Continue only after that checkpoint.
+
 ## Coding Style and Naming
 
 Format Java with Spotless using Google Java Format (`./gradlew spotlessApply` to apply, `./gradlew spotlessCheck` to verify). Use two spaces for TypeScript, TSX, JSON, and CSS. Follow Java package and class naming conventions (lowercase packages, `PascalCase` classes); name React components with `PascalCase` and variables/functions with `camelCase`. Keep frontend route files aligned with Next.js App Router conventions. Prefer small, focused changes and validate inputs at API boundaries.
