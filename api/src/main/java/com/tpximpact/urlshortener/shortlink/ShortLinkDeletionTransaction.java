@@ -1,5 +1,7 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.shortlink;
 
+import com.tpximpact.urlshortener.api.ApiProblems;
+import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

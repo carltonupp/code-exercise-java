@@ -1,9 +1,10 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.shortlink;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;

@@ -1,8 +1,10 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.api;
 
 import com.tpximpact.urlshortener.generated.api.ShortLinkRedirectApi;
 import com.tpximpact.urlshortener.generated.api.UrlsApi;
 import com.tpximpact.urlshortener.generated.model.UrlEntry;
+import com.tpximpact.urlshortener.shortlink.AliasResolution;
+import com.tpximpact.urlshortener.shortlink.ShortLinkService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import org.springframework.web.bind.annotation.RestController;

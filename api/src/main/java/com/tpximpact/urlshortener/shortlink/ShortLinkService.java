@@ -1,6 +1,8 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.shortlink;
 
+import com.tpximpact.urlshortener.api.ApiProblems;
 import com.tpximpact.urlshortener.generated.model.UrlEntry;
+import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;

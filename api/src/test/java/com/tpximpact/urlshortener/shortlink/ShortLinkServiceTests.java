@@ -1,4 +1,4 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.shortlink;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.tpximpact.urlshortener.generated.model.ValidationError;
+import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.URI;
 import java.util.List;

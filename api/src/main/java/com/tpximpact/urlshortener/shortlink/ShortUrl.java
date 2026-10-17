@@ -1,4 +1,4 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.shortlink;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

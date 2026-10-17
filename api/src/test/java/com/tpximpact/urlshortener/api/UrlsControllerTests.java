@@ -1,4 +1,4 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.api;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.tpximpact.urlshortener.generated.model.UrlEntry;
+import com.tpximpact.urlshortener.shortlink.AliasResolution;
+import com.tpximpact.urlshortener.shortlink.ShortLinkService;
 import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.Test;

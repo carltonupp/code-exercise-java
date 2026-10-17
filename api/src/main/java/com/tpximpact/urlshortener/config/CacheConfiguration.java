@@ -1,4 +1,4 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.config;
 
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;

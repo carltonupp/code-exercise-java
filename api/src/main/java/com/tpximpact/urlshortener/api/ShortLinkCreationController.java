@@ -1,8 +1,9 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.api;
 
 import com.tpximpact.urlshortener.generated.api.ShortLinkCreationApi;
 import com.tpximpact.urlshortener.generated.model.ShortenRequest;
 import com.tpximpact.urlshortener.generated.model.ShortenResponse;
+import com.tpximpact.urlshortener.shortlink.ShortLinkService;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController

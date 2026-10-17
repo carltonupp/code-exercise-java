@@ -1,4 +1,4 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.api;
 
 import com.tpximpact.urlshortener.generated.model.ValidationError;
 import java.net.URI;
@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
 
-final class ApiProblems {
+public final class ApiProblems {
   private ApiProblems() {}
 
   static URI type(String name) {
@@ -33,12 +33,12 @@ final class ApiProblems {
     return problem;
   }
 
-  static ErrorResponseException invalidField(String field, String message) {
+  public static ErrorResponseException invalidField(String field, String message) {
     return new ErrorResponseException(
         HttpStatus.BAD_REQUEST, validation(List.of(new ValidationError(field, message))), null);
   }
 
-  static ErrorResponseException aliasInUse() {
+  public static ErrorResponseException aliasInUse() {
     return new ErrorResponseException(
         HttpStatus.BAD_REQUEST,
         problem(
@@ -49,7 +49,7 @@ final class ApiProblems {
         null);
   }
 
-  static ErrorResponseException aliasGenerationExhausted() {
+  public static ErrorResponseException aliasGenerationExhausted() {
     return new ErrorResponseException(
         HttpStatus.SERVICE_UNAVAILABLE,
         problem(
@@ -60,7 +60,7 @@ final class ApiProblems {
         null);
   }
 
-  static ErrorResponseException aliasNotFound() {
+  public static ErrorResponseException aliasNotFound() {
     return new ErrorResponseException(
         HttpStatus.NOT_FOUND,
         problem(
@@ -71,7 +71,7 @@ final class ApiProblems {
         null);
   }
 
-  static ErrorResponseException aliasDeleted() {
+  public static ErrorResponseException aliasDeleted() {
     return new ErrorResponseException(
         HttpStatus.NOT_FOUND,
         problem(

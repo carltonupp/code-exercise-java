@@ -1,4 +1,4 @@
-package com.tpximpact.urlshortener;
+package com.tpximpact.urlshortener.api;
 
 import com.tpximpact.urlshortener.generated.model.ValidationError;
 import java.net.URI;
