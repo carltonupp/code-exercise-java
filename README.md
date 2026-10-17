@@ -6,7 +6,7 @@ A decoupled URL shortener with a Spring Boot API and a Next.js frontend. The API
 
 - `api/` — Java 21 and Spring Boot 4 REST API (Gradle wrapper)
 - `web/` — Next.js App Router frontend (React and TypeScript)
-- `openapi.yaml` — API contract
+- `openapi.yaml` — source of truth for API operations and schemas
 
 ## Run with Docker Compose
 
@@ -24,8 +24,8 @@ To rebuild after changes, run `docker compose up --build`. To run either service
 
 ## Build and test
 
-Compose builds both container images with `docker compose build`. Run `cd api && ./gradlew spotlessCheck test` for API formatting and tests, or `./gradlew spotlessApply` from `api/` to format Java. Frontend component tests use Vitest and React Testing Library; run `cd web && npm test && npm run lint` to check tests and lint.
+Compose builds both container images with `docker compose build`. Run `cd api && ./gradlew spotlessCheck test` to validate the OpenAPI contract, compile generated Java interfaces/models, and run API formatting and tests. Use `./gradlew openApiGenerate` from `api/` to regenerate the Spring interfaces and models. Controllers should implement their generated API interfaces so contract changes cause compile failures. Generate the UI's typed Fetch API client with `cd web && npm run api:generate`; this runs automatically before `npm run dev` and `npm run build`. Frontend component tests use Vitest and React Testing Library; run `cd web && npm test && npm run lint && npm run typecheck` to check tests, lint, and TypeScript.
 
-In a fresh clone, enable the Git hooks with `./.agents/skills/repo-setup/scripts/install-git-hooks.sh`. The pre-commit hook runs API formatting and tests plus frontend tests and lint; install Java 21, Node.js 22.12+, and frontend dependencies with `cd web && npm install` first.
+In a fresh clone, enable the Git hooks with `./.agents/skills/repo-setup/scripts/install-git-hooks.sh`. The pre-commit hook validates the OpenAPI spec, compiles generated Java interfaces, and runs API formatting/tests plus frontend tests, lint, and TypeScript checks; install Java 21, Node.js 22.12+, and frontend dependencies with `cd web && npm install` first.
 
 The URL-shortening endpoints and persistence are to be implemented against the supplied OpenAPI contract.

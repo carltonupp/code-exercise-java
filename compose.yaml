@@ -1,7 +1,8 @@
 services:
   api:
     build:
-      context: ./api
+      context: .
+      dockerfile: api/Dockerfile
     environment:
       DATABASE_URL: jdbc:sqlite:/data/urlshortener.db
     ports:
@@ -11,7 +12,8 @@ services:
 
   web:
     build:
-      context: ./web
+      context: .
+      dockerfile: web/Dockerfile
     environment:
       API_BASE_URL: http://api:8080
     ports:

@@ -3,6 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'com.diffplug.spotless' version '8.10.4'
+	id 'org.openapi.generator' version '7.26.0'
 }
 
 group = 'com.tpximpact'
@@ -25,6 +26,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.hibernate.orm:hibernate-community-dialects'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.xerial:sqlite-jdbc'
@@ -39,8 +41,41 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+def generatedOpenApiDir = layout.buildDirectory.dir('generated/openapi')
+
+openApiGenerate {
+	generatorName = 'spring'
+	inputSpec = "$rootDir/../openapi.yaml"
+	outputDir = generatedOpenApiDir.get().asFile.absolutePath
+	apiPackage = 'com.tpximpact.urlshortener.generated.api'
+	modelPackage = 'com.tpximpact.urlshortener.generated.model'
+	configOptions = [
+		interfaceOnly: 'true',
+		skipDefaultInterface: 'true',
+		useSpringBoot3: 'true',
+		useTags: 'true',
+		requestMappingMode: 'api_interface',
+		useResponseEntity: 'false',
+		useBeanValidation: 'true',
+		openApiNullable: 'false',
+		hideGenerationTimestamp: 'true',
+		documentationProvider: 'none',
+		annotationLibrary: 'none'
+	]
+}
+
+openApiValidate {
+	inputSpec = "$rootDir/../openapi.yaml"
+}
+
+sourceSets.main.java.srcDir(generatedOpenApiDir.map { it.dir('src/main/java') })
+tasks.named('compileJava') {
+	dependsOn tasks.named('openApiGenerate')
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
+	dependsOn tasks.named('openApiValidate')
 }
 
 tasks.named('bootJar') {
@@ -49,6 +84,7 @@ tasks.named('bootJar') {
 
 spotless {
 	java {
+		targetExclude 'build/generated/openapi/**'
 		googleJavaFormat('1.28.0')
 	}
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createApiClient } from "../../../lib/api-client";
 
 export const dynamic = "force-dynamic";
 
@@ -10,12 +11,12 @@ export async function GET() {
   ).replace(/\/+$/, "");
 
   try {
-    const response = await fetch(`${apiBaseUrl}/actuator/health`, {
+    const client = createApiClient(apiBaseUrl);
+    const { data, response } = await client.GET("/actuator/health", {
       cache: "no-store",
       signal: AbortSignal.timeout(3000),
     });
-    const health: { status?: string } = await response.json();
-    const connected = response.ok && health.status === "UP";
+    const connected = response.ok && data?.status === "UP";
 
     return NextResponse.json({ connected }, { status: connected ? 200 : 503 });
   } catch {

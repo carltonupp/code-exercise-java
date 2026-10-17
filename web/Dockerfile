@@ -1,19 +1,21 @@
 FROM node:22-alpine AS dependencies
-WORKDIR /app
-COPY package.json package-lock.json ./
+WORKDIR /workspace/web
+COPY web/package.json web/package-lock.json ./
 RUN npm ci
 
 FROM node:22-alpine AS build
-WORKDIR /app
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY . .
+WORKDIR /workspace
+COPY --from=dependencies /workspace/web/node_modules ./web/node_modules
+COPY openapi.yaml ./openapi.yaml
+COPY web/ ./web/
+WORKDIR /workspace/web
 RUN npm run build
 
 FROM node:22-alpine AS runner
-WORKDIR /app
+WORKDIR /workspace/web
 ENV NODE_ENV=production
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
+COPY --from=build /workspace/web/package.json ./package.json
+COPY --from=build /workspace/web/node_modules ./node_modules
+COPY --from=build /workspace/web/.next ./.next
 EXPOSE 3000
 CMD ["npm", "run", "start", "--", "--hostname", "0.0.0.0"]

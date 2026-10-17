@@ -7,14 +7,19 @@
   },
   "scripts": {
     "dev": "next dev",
+    "predev": "npm run api:generate",
     "build": "next build",
+    "prebuild": "npm run api:generate",
     "start": "next start",
     "lint": "eslint .",
+    "api:generate": "openapi-typescript ../openapi.yaml -o src/generated/openapi.ts",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "next": "^16.1.0",
+    "openapi-fetch": "^0.14.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
@@ -27,7 +32,9 @@
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.0",
     "jsdom": "^27.1.0",
+    "openapi-typescript": "^7.10.1",
     "typescript": "^5.0.0",
+    "vite": "^7.3.0",
     "vitest": "^5.0.5"
   }
 }

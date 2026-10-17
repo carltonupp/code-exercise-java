@@ -5,40 +5,47 @@ info:
   description: Simple RESTful API for shortening URLs.
 
 paths:
+  /actuator/health:
+    get:
+      operationId: checkHealth
+      tags:
+        - Health
+      summary: Check API health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
   /shorten:
     post:
+      operationId: shortenUrl
+      tags:
+        - Urls
       summary: Shorten a URL
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - fullUrl
-              properties:
-                fullUrl:
-                  type: string
-                  example: https://example.com/very/long/url
-                customAlias:
-                  type: string
-                  example: my-custom-alias
+              $ref: '#/components/schemas/ShortenRequest'
       responses:
         '201':
           description: URL successfully shortened
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  shortUrl:
-                    type: string
-                    example: http://localhost:8080/my-custom-alias
+                $ref: '#/components/schemas/ShortenResponse'
         '400':
           description: Invalid input or alias already taken
 
   /{alias}:
     get:
+      operationId: redirectToUrl
+      tags:
+        - Urls
       summary: Redirect to full URL
       parameters:
         - name: alias
@@ -53,6 +60,9 @@ paths:
           description: Alias not found
 
     delete:
+      operationId: deleteUrl
+      tags:
+        - Urls
       summary: Delete a shortened URL
       parameters:
         - name: alias
@@ -68,6 +78,9 @@ paths:
 
   /urls:
     get:
+      operationId: listUrls
+      tags:
+        - Urls
       summary: List all shortened URLs
       responses:
         '200':
@@ -77,14 +90,58 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    alias:
-                      type: string
-                      example: my-custom-alias
-                    fullUrl:
-                      type: string
-                      example: https://example.com/very/long/url
-                    shortUrl:
-                      type: string
-                      example: http://localhost:8080/my-custom-alias
+                  $ref: '#/components/schemas/UrlEntry'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - UP
+            - DOWN
+            - OUT_OF_SERVICE
+            - UNKNOWN
+    ShortenRequest:
+      type: object
+      required:
+        - fullUrl
+      properties:
+        fullUrl:
+          type: string
+          format: uri
+          example: https://example.com/very/long/url
+        customAlias:
+          type: string
+          example: my-custom-alias
+    ShortenResponse:
+      type: object
+      required:
+        - shortUrl
+      properties:
+        shortUrl:
+          type: string
+          format: uri
+          example: http://localhost:8080/my-custom-alias
+    UrlEntry:
+      type: object
+      required:
+        - alias
+        - fullUrl
+        - shortUrl
+      properties:
+        alias:
+          type: string
+          example: my-custom-alias
+        fullUrl:
+          type: string
+          format: uri
+          example: https://example.com/very/long/url
+        shortUrl:
+          type: string
+          format: uri
+          example: http://localhost:8080/my-custom-alias

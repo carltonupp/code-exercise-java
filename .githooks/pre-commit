@@ -21,3 +21,6 @@ printf 'Running frontend tests...\n'
 
 printf 'Running frontend lint...\n'
 (cd "$repo_root/web" && npm run lint)
+
+printf 'Checking frontend TypeScript...\n'
+(cd "$repo_root/web" && npm run typecheck)

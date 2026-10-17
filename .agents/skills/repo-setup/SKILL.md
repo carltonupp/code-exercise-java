@@ -17,7 +17,7 @@ From the repository root, run:
 
 This sets the checkout's local `core.hooksPath` to `.githooks`. The `commit-msg` hook enforces Conventional Commit subject lines. Use `<type>[optional scope][!]: <description>`, such as `feat(web): show API connection status`.
 
-The `pre-commit` hook runs `spotlessCheck test` for the API and `npm test` plus `npm run lint` for the frontend. Install Java 21, Node.js 22.12+, and run `cd web && npm install` before committing.
+The `pre-commit` hook validates the OpenAPI contract, compiles generated Java API interfaces/models, and runs API formatting/tests plus frontend tests, lint, and TypeScript checks. Install Java 21, Node.js 22.12+, and run `cd web && npm install` before committing. For contract edits, regenerate Java with `cd api && ./gradlew openApiGenerate`; the UI client is generated with `cd web && npm run api:generate` and also refreshes before dev and production builds.
 
 ## Start the Project
 
