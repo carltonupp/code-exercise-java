@@ -19,7 +19,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start;
   padding: 8vw 12vw;
   background: radial-gradient(ellipse at 78% 10%, #e0eee5 0, transparent 36%), var(--paper);
 }
@@ -29,7 +30,7 @@ body {
 .connection-status.connected .connection-dot { background: #16864f; }
 .connection-status.disconnected .connection-dot { background: #cc3f3f; }
 
-.intro { max-width: 720px; }
+.intro { width: min(100%, 720px); }
 .eyebrow { color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .18em; }
 h1 { margin: 22px 0 12px; font: 800 clamp(3.2rem, 8vw, 6.3rem)/.98 "Avenir Next", Avenir, "Segoe UI", sans-serif; letter-spacing: -.075em; }
 .description { max-width: 500px; color: var(--muted); font-size: 18px; line-height: 1.65; }
@@ -51,11 +52,36 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .setup-note { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
 .setup-note { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
 code { color: var(--green); }
-footer { margin-top: 54px; color: #85918b; font-size: 12px; }
+
+.link-list { width: min(100%, 960px); margin-top: 64px; }
+.link-list-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.link-list-heading .eyebrow { margin: 0 0 10px; }
+.link-list-heading h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -.04em; }
+.result-count { margin: 0 0 3px; color: var(--muted); font-size: 14px; }
+.link-entries { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.link-entry { display: grid; grid-template-columns: minmax(110px, .7fr) minmax(180px, 1fr) minmax(240px, 1.6fr); gap: 20px; padding: 20px; border: 1px solid #e2e8e1; border-radius: 14px; background: #fff; box-shadow: 0 10px 32px #274f3808; }
+.link-entry-alias, .link-entry-value { display: grid; align-content: start; gap: 7px; min-width: 0; }
+.link-entry-alias span, .link-entry-value span { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.link-entry-alias strong { overflow-wrap: anywhere; color: var(--green); }
+.link-entry-value a { overflow-wrap: anywhere; color: var(--ink); font-size: 14px; line-height: 1.45; }
+.link-entry-value a:hover { color: var(--green); }
+.list-message, .list-error, .empty-links { padding: 24px; border: 1px solid #e2e8e1; border-radius: 14px; background: #fff; }
+.list-message { color: var(--muted); }
+.list-error { color: #a22b2b; }
+.empty-links h3 { margin: 0 0 8px; font-size: 17px; }
+.empty-links p { margin: 0 0 14px; color: var(--muted); }
+.empty-links a { color: var(--green); font-size: 14px; font-weight: 700; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 22px; color: var(--muted); font-size: 14px; }
+.pagination-button { min-height: 40px; padding: 0 16px; }
+footer { width: min(100%, 960px); margin-top: 54px; color: #85918b; font-size: 12px; }
 
 @media (max-width: 620px) {
   .page-shell { padding: 96px 22px 56px; }
   .connection-status { top: 18px; right: 18px; }
   .form-row { flex-direction: column; }
   .short-link-result { align-items: stretch; flex-direction: column; }
+  .link-list { margin-top: 48px; }
+  .link-list-heading { align-items: start; flex-direction: column; gap: 8px; }
+  .link-entry { grid-template-columns: 1fr; gap: 14px; }
+  .pagination { gap: 10px; }
 }

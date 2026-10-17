@@ -1,7 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import ConnectionStatus from "@/app/ConnectionStatus";
+import ShortLinkList from "@/app/ShortLinkList";
 import ShortLinkForm from "@/app/ShortLinkForm";
 
 export default function Home() {
+  const [refreshToken, setRefreshToken] = useState(0);
+
   return (
     <main className="page-shell">
       <ConnectionStatus />
@@ -9,10 +15,11 @@ export default function Home() {
         <p className="eyebrow">URL SHORTENER</p>
         <h1 id="page-title">A little less link.</h1>
         <p className="description">
-          Your link management workspace is ready. Create a short link to get started.
+          Create a short link, then find and share it here whenever you need it.
         </p>
-        <ShortLinkForm />
+        <ShortLinkForm onCreated={() => setRefreshToken((current) => current + 1)} />
       </section>
+      <ShortLinkList refreshToken={refreshToken} />
       <footer>API and frontend are separate apps, connected through the REST contract.</footer>
     </main>
   );

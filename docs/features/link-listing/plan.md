@@ -3,14 +3,13 @@
 ## Task sequence
 | ID | Outcome and acceptance criteria | Dependencies | Area/owner | Parallelizable | Completion evidence |
 |---|---|---|---|---|---|
-| T1 | Provide the paginated list operation and view for active links, including an empty state and deterministic newest-first order (AC-1, AC-3–AC-6). Update the existing `/urls` contract and implementation with a default page size of 20 and a bounded page-size parameter. | — | OpenAPI contract, API, persistence, and web | No | Contract validation and API/UI behavior cover page boundaries, total pages, stable ordering, populated lists, and empty lists. |
-| T2 | Extend the paginated list to include deleted tombstones, mark them deleted, and omit their removed destination (AC-2, AC-5, AC-6). | Link Deletion T2 | API, contract, and web | No | API/UI behavior covers active and deleted rows across pages and confirms deleted destinations are not displayed. |
+| T1 | Implement the existing `GET /urls` operation for active links, ordered newest first with a deterministic tie-breaker (AC-1, AC-4, AC-7). Keep the OpenAPI request and response contract unchanged. | — | API and persistence | No | API behavior covers active-only results, newest-first ordering, ties, and an empty collection. |
+| T2 | Add a Next.js server route that accepts a page number, fetches the existing API collection, slices 20 links per page, and returns the items plus current page and total page count (AC-5, AC-6). Reject or normalize invalid page values consistently. | T1 | Web server/API integration | No | Route behavior covers first, middle, last, out-of-range, and empty pages, including exactly-once coverage across page boundaries. |
+| T3 | Add the paginated link list to the home page with alias, short URL, destination, newest-first display, total result count, previous/next controls, page status, and an empty state that links users to the creation form (AC-1–AC-6). | T2 | Web UI | No | Frontend behavior covers populated and empty states, total result count, page navigation, disabled boundary controls, and the link fields shown. |
 
 ## Integration and validation
-- The application has one user, so `/urls` returns the application's links without per-user ownership or access-control filtering.
-- Use the existing `/urls` operation rather than adding another list route unless a contract gap requires it.
-- Apply pagination in the API and expose page metadata so the UI does not need to fetch every link. Use a stable tie-breaker for links created at the same time so moving between pages does not duplicate or skip entries.
-- Link Deletion depends on T1 for the list as the place to find a link to delete. Link Resolution depends on Link Deletion for deleted state.
-- Complete this plan's T1 contract changes before Link Deletion T1 and Link Resolution T1, since all edit `openapi.yaml`. Link Listing T2 follows Link Deletion T2 because it needs the tombstone state.
-- During implementation, validate API responses and list display with the repository's API and web checks.
-
+- This is a single-user list of active links. Deleted links are excluded; deletion and tombstone behavior belong to [Link Deletion](../link-deletion/plan.md) and [Link Resolution](../link-resolution/plan.md).
+- Keep `openapi.yaml` and generated clients unchanged, as recorded in [ADR 0008](../../adr/0008-paginate-link-list-at-web-boundary.md). Pagination happens in a Next.js server route: the API still returns the complete active collection, while the browser receives one page and metadata.
+- Use 20 links per page. Sort newest first and use a stable tie-breaker so links created at the same time do not move between pages unpredictably.
+- Keep the task sequence serial: T2 depends on the API's ordering and active-only behavior, and T3 depends on the server route response shape.
+- Validate with the API checks after T1 and the web tests, lint, and typecheck after T2 and T3. Finish with the repository's API and web validation commands and a manual create/list/page/delete smoke check once deletion is implemented.

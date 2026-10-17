@@ -20,7 +20,7 @@ function normalizeDestination(value: string) {
   }
 }
 
-export default function ShortLinkForm() {
+export default function ShortLinkForm({ onCreated }: { onCreated?: () => void }) {
   const [fullUrl, setFullUrl] = useState("");
   const [customAlias, setCustomAlias] = useState("");
   const [shortUrl, setShortUrl] = useState("");
@@ -86,6 +86,7 @@ export default function ShortLinkForm() {
       setShortUrl(result.shortUrl);
       setFullUrl("");
       setCustomAlias("");
+      onCreated?.();
     } catch {
       setError("The short link service is unavailable. Your entries are still here; try again.");
     } finally {
@@ -104,7 +105,7 @@ export default function ShortLinkForm() {
 
   return (
     <>
-      <form className="shorten-form" onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
+      <form id="create-link" className="shorten-form" onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
         <div className="form-field">
           <label htmlFor="fullUrl">Long URL</label>
           <input
