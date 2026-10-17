@@ -1,44 +1,31 @@
-# URL Shortener Coding Exercise
+# URL Shortener
 
-## Task
+A decoupled URL shortener with a Spring Boot API and a Next.js frontend. The API contract is in [`openapi.yaml`](./openapi.yaml).
 
-Build a simple **URL shortener** in **your preferred language** (e.g. Java, C#, Python).
+## Project layout
 
-It should:
+- `api/` — Java 21 and Spring Boot 4 REST API (Gradle wrapper)
+- `web/` — Next.js App Router frontend (React and TypeScript)
+- `openapi.yaml` — API contract
 
-- Accept a full URL and return a shortened URL.
-- A shortened URL should have a randomly generated alias.
-- Allow a user to **customise the shortened URL** if they want to (e.g. user provides `my-custom-alias` instead of a random string).
-- Persist the shortened URLs across restarts.
-- Expose a **decoupled web frontend** built with a modern framework (e.g., React, Next.js, Vue.js, Angular, Flask with templates). This can be lightweight form/output just to demonstrate interaction with the API. Feel free to use UI frameworks like Bootstrap, Material-UI, Tailwind CSS, GOV.UK design system, etc. to speed up development.
-- Expose a **RESTful API** to perform create/read/delete operations on URLs.  
-  → Refer to the provided [`openapi.yaml`](./openapi.yaml) for API structure and expected behaviour.
-- Include the ability to **delete a shortened URL** via the API.
-- **Have tests**.
-- Be containerised (e.g. Docker).
-- Include instructions for running locally.
+## Run with Docker Compose
 
-## Rules
+Install Docker Engine or Docker Desktop with the Compose plugin, then run from the repository root:
 
-- Fork the repository and work in your fork. Do not push directly to the main repository.
-- There is no time limit, we want to see something you are proud of. We would like to understand roughly how long you spent on it though.
-- **Commit often with meaningful messages.**
-- Write tests.
-- The API should validate inputs and handle errors gracefully.
-- The Frontend should show errors from the API appropriately.
-- Use the provided [`openapi.yaml`](./openapi.yaml) as the API contract.
-- Focus on clean, maintainable code.
-- AI tools (e.g., GitHub Copilot, ChatGPT) are allowed, but please **do not** copy-paste large chunks of code. Use them as assistants, not as a replacement for your own work. We will be asking.
+```sh
+docker compose up --build
+```
 
-## Deliverables
+Open <http://localhost:3000> for the frontend and <http://localhost:8080> for the API. The green/red status dot polls the API health endpoint every five seconds. Stop the services with `Ctrl+C`, or run `docker compose down` from another terminal.
 
-- Working software.
-- Decoupled web frontend (using a modern framework like React, Next.js, Vue.js, Angular, or Flask with templates).
-- RESTful API matching the OpenAPI spec.
-- Tests.
-- A git commit history that shows your thought process.
-- Dockerfile.
-- README with:
-  - How to build and run locally.
-  - Example usage (frontend and API).
-  - Any notes or assumptions.
+The API stores its SQLite database in a named Compose volume, so data remains available after containers are recreated.
+
+To rebuild after changes, run `docker compose up --build`. To run either service outside Docker for development, use Java 21 and `cd api && ./gradlew bootRun`, or Node.js 22.12+ and `cd web && npm install && API_BASE_URL=http://localhost:8080 npm run dev`.
+
+## Build and test
+
+Compose builds both container images with `docker compose build`. Run `cd api && ./gradlew spotlessCheck test` for API formatting and tests, or `./gradlew spotlessApply` from `api/` to format Java. Frontend component tests use Vitest and React Testing Library; run `cd web && npm test && npm run lint` to check tests and lint.
+
+In a fresh clone, enable the Git hooks with `./.agents/skills/repo-setup/scripts/install-git-hooks.sh`. The pre-commit hook runs API formatting and tests plus frontend tests and lint; install Java 21, Node.js 22.12+, and frontend dependencies with `cd web && npm install` first.
+
+The URL-shortening endpoints and persistence are to be implemented against the supplied OpenAPI contract.

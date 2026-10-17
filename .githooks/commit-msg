@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+message_file=${1:?commit message file is required}
+subject=$(sed -n '1p' "$message_file")
+
+if printf '%s\n' "$subject" | grep -Eq '^[a-z][a-z0-9-]*(\([[:alnum:]][[:alnum:]./_-]*\))?(!)?: .+'; then
+    exit 0
+fi
+
+cat >&2 <<'EOF'
+Commit rejected: use Conventional Commits for the subject line.
+
+Format: <type>[optional scope][!]: <description>
+Example: feat(web): show API connection status
+EOF
+exit 1

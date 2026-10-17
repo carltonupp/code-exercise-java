@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel)
+
+if ! command -v java >/dev/null 2>&1; then
+    echo "Commit checks require Java 21. Install it before committing." >&2
+    exit 1
+fi
+
+if [ ! -x "$repo_root/web/node_modules/.bin/eslint" ]; then
+    echo "Frontend dependencies are missing. Run 'cd web && npm install' before committing." >&2
+    exit 1
+fi
+
+printf 'Running Java formatting check and tests...\n'
+(cd "$repo_root/api" && ./gradlew --no-daemon spotlessCheck test)
+
+printf 'Running frontend tests...\n'
+(cd "$repo_root/web" && npm test)
+
+printf 'Running frontend lint...\n'
+(cd "$repo_root/web" && npm run lint)

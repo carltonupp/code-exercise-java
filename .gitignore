@@ -1,0 +1,21 @@
+# Java / Maven
+api/target/
+api/build/
+api/.gradle/
+api/urlshortener.db*
+*.class
+
+# Node / Next.js
+web/node_modules/
+web/.next/
+web/out/
+web/out/
+web/next-env.d.ts
+npm-debug.log*
+
+# Local environment and editor files
+.env
+.env.*.local
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,51 @@
+:root {
+  color-scheme: light;
+  --ink: #172b26;
+  --muted: #60716b;
+  --green: #176b52;
+  --paper: #f7f8f4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+}
+
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8vw 12vw;
+  background: radial-gradient(ellipse at 78% 10%, #e0eee5 0, transparent 36%), var(--paper);
+}
+
+.connection-status { position: fixed; top: 24px; right: 28px; display: inline-flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid #e2e8e1; border-radius: 999px; background: #fff; color: var(--muted); font-size: 12px; font-weight: 600; box-shadow: 0 8px 24px #274f380d; }
+.connection-dot { width: 9px; height: 9px; border-radius: 50%; background: #a5ada8; }
+.connection-status.connected .connection-dot { background: #16864f; }
+.connection-status.disconnected .connection-dot { background: #cc3f3f; }
+
+.intro { max-width: 720px; }
+.eyebrow { color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+h1 { margin: 22px 0 12px; font: 800 clamp(3.2rem, 8vw, 6.3rem)/.98 "Avenir Next", Avenir, "Segoe UI", sans-serif; letter-spacing: -.075em; }
+.description { max-width: 500px; color: var(--muted); font-size: 18px; line-height: 1.65; }
+.shorten-form { margin-top: 54px; padding: 26px; border: 1px solid #e2e8e1; border-radius: 18px; background: #fff; box-shadow: 0 18px 55px #274f3810; }
+label { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 700; }
+.form-row { display: flex; gap: 12px; }
+input { flex: 1; min-width: 0; padding: 15px 16px; border: 1px solid #dbe3dd; border-radius: 9px; color: var(--ink); font: inherit; }
+button { padding: 0 20px; border: 0; border-radius: 9px; background: var(--green); color: white; font: 600 14px "Avenir Next", Avenir, "Segoe UI", sans-serif; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.setup-note { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+code { color: var(--green); }
+footer { margin-top: 54px; color: #85918b; font-size: 12px; }
+
+@media (max-width: 620px) {
+  .page-shell { padding: 96px 22px 56px; }
+  .connection-status { top: 18px; right: 18px; }
+  .form-row { flex-direction: column; }
+  button { min-height: 48px; }
+}
