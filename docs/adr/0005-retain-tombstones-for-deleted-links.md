@@ -1,6 +1,6 @@
 # ADR 0005: Retain Tombstones for Deleted Links
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-17
 
 ## Context

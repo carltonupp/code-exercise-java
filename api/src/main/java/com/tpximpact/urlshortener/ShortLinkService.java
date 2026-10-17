@@ -1,11 +1,14 @@
 package com.tpximpact.urlshortener;
 
+import com.tpximpact.urlshortener.generated.model.UrlEntry;
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ShortLinkService {
@@ -36,6 +39,27 @@ public class ShortLinkService {
       return shortUrlFor(customAlias);
     }
     return createGeneratedAlias(fullUrl);
+  }
+
+  public List<UrlEntry> listActive() {
+    return repository.findAll().stream()
+        .filter(shortUrl -> !shortUrl.isDeleted())
+        .map(
+            shortUrl ->
+                new UrlEntry(
+                    shortUrl.getAlias(), shortUrl.getFullUrl(), shortUrlFor(shortUrl.getAlias())))
+        .toList();
+  }
+
+  @Transactional
+  public void delete(String alias) {
+    String aliasKey = canonicalAlias(alias);
+    ShortUrl shortUrl = repository.findById(aliasKey).orElseThrow(ApiProblems::aliasNotFound);
+    if (shortUrl.isDeleted()) {
+      throw ApiProblems.aliasNotFound();
+    }
+    shortUrl.markDeleted();
+    repository.saveAndFlush(shortUrl);
   }
 
   private void validateFullUrl(URI fullUrl) {

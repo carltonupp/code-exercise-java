@@ -59,4 +59,15 @@ final class ApiProblems {
             "Could not allocate a unique alias; please try again."),
         null);
   }
+
+  static ErrorResponseException aliasNotFound() {
+    return new ErrorResponseException(
+        HttpStatus.NOT_FOUND,
+        problem(
+            HttpStatus.NOT_FOUND,
+            "not-found",
+            "Link not found",
+            "No active link exists for this alias."),
+        null);
+  }
 }

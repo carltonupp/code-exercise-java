@@ -37,6 +37,6 @@ People may keep or share short links after deletion. A tombstone tells them the 
 ## Constraints, assumptions, and open questions
 - Deleted aliases remain reserved permanently, following [ADR 0003](../../adr/0003-use-normalized-alias-as-short-link-primary-key.md).
 - The tombstone must be distinguishable from an alias that was never assigned and should not reveal the deleted destination.
-- Assumption: deletion removes the saved destination while preserving only the alias and deleted state. Confirm if deletion should retain the destination for restoration or audit use.
-- Confirm the behavior for repeating a delete request: not found, or an idempotent success.
+- Deletion clears the saved destination while preserving the alias and deleted state.
+- Repeating a delete request returns not found, matching requests for unknown aliases.
 - The application has one user; deletion does not require per-user ownership checks or account identity.

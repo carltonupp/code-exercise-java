@@ -19,12 +19,16 @@ public class ShortUrl {
   @Column(name = "full_url", nullable = false, length = 4096)
   private String fullUrl;
 
+  @Column(name = "deleted")
+  private Boolean deleted;
+
   protected ShortUrl() {}
 
   public ShortUrl(String aliasKey, String alias, URI fullUrl) {
     this.aliasKey = aliasKey;
     this.alias = alias;
     this.fullUrl = fullUrl.toString();
+    this.deleted = false;
   }
 
   public String getAlias() {
@@ -33,5 +37,14 @@ public class ShortUrl {
 
   public URI getFullUrl() {
     return URI.create(fullUrl);
+  }
+
+  public boolean isDeleted() {
+    return Boolean.TRUE.equals(deleted);
+  }
+
+  public void markDeleted() {
+    fullUrl = "";
+    deleted = true;
   }
 }
