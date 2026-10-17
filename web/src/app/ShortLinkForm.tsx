@@ -1,10 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import type { components } from "../generated/openapi";
-
-type Problem = components["schemas"]["Problem"];
-type ShortenResponse = components["schemas"]["ShortenResponse"];
+import type { Problem, ShortenResponse, ValidationError } from "@/api";
 
 function normalizeDestination(value: string) {
   const trimmedValue = value.trim();
@@ -28,7 +25,7 @@ export default function ShortLinkForm() {
   const [customAlias, setCustomAlias] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<components["schemas"]["ValidationError"][]>([]);
+  const [fieldErrors, setFieldErrors] = useState<ValidationError[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const urlError = fieldErrors

@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import type { components } from "../../../generated/openapi";
-import { createApiClient } from "../../../lib/api-client";
-
-type Problem = components["schemas"]["Problem"];
-type ShortenRequest = components["schemas"]["ShortenRequest"];
+import { createApiClient, type Problem, type ShortenRequest } from "@/api";
 
 export const dynamic = "force-dynamic";
 
