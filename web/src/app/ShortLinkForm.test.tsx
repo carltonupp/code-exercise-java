@@ -76,7 +76,7 @@ describe("ShortLinkForm", () => {
       method: "POST",
       body: JSON.stringify({ fullUrl: "https://google.com/" }),
     }));
-    expect(urlInput).toHaveValue("https://google.com/");
+    expect(urlInput).toHaveValue("");
   });
 
   it("shows validation errors without sending invalid values", () => {

@@ -84,6 +84,8 @@ export default function ShortLinkForm() {
       }
       const result = await response.json() as ShortenResponse;
       setShortUrl(result.shortUrl);
+      setFullUrl("");
+      setCustomAlias("");
     } catch {
       setError("The short link service is unavailable. Your entries are still here; try again.");
     } finally {
