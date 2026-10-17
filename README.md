@@ -70,6 +70,8 @@ flowchart LR
 
 The API caches known active and deleted aliases for up to 60 seconds, with a 10,000-entry limit. Unknown aliases are not cached. The cache is local to each API process. A lookup racing with deletion can briefly repopulate an active result after deletion evicts it; that result can remain until its cache entry expires.
 
+See the [Azure hosting proposal](./docs/architecture/azure-hosting.md) for a production deployment design using Application Gateway, containerized App Services, Azure SQL, private networking, and Azure Monitor.
+
 ## Use the API
 
 The API contract lives in [`openapi.yaml`](./openapi.yaml). Create a link with a custom alias:
@@ -152,3 +154,5 @@ docs/features/       Feature specifications and implementation plans
 docs/agentic-development.md  How specs, plans, instructions, and skills fit together
 compose.yaml         Local multi-service environment
 ```
+
+I included the feature specs and implementation plans to demonstrate one way I use AI to generate code consistently and keep the work traceable. This is an example of my workflow, not the only way I work.
