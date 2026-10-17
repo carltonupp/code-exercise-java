@@ -2,6 +2,7 @@ package com.tpximpact.urlshortener;
 
 import com.tpximpact.urlshortener.generated.model.UrlEntry;
 import java.net.URI;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -44,6 +45,10 @@ public class ShortLinkService {
   public List<UrlEntry> listActive() {
     return repository.findAll().stream()
         .filter(shortUrl -> !shortUrl.isDeleted())
+        .sorted(
+            Comparator.comparing(
+                    ShortUrl::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(ShortUrl::getAliasKey))
         .map(
             shortUrl ->
                 new UrlEntry(
