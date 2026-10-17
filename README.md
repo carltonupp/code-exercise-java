@@ -122,7 +122,16 @@ cd api && ./gradlew spotlessCheck test
 
 # Frontend tests, lint, and TypeScript checks
 cd web && npm test && npm run lint && npm run typecheck
+
+# Frontend tests with coverage (excludes generated OpenAPI types)
+cd web && npm run test:coverage
+
+# Browser end-to-end tests (requires Docker Compose and Chromium)
+cd web && npx playwright install chromium && npm run test:e2e
 ```
+
+The HTML coverage report is written to `web/coverage/index.html`.
+Playwright starts an isolated Compose project on ports 13000 and 18080, then removes its containers and database volume when the suite finishes.
 
 Regenerate the Java API interfaces and models with `cd api && ./gradlew openApiGenerate`. Generate the TypeScript client with `cd web && npm run api:generate`. Generated files live under `api/build/generated/openapi/` and `web/src/generated/`; edit the OpenAPI source rather than generated output.
 

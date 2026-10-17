@@ -8,6 +8,9 @@ api/urlshortener.db*
 # Node / Next.js
 web/node_modules/
 web/.next/
+web/coverage/
+web/test-results/
+web/playwright-report/
 web/out/
 web/out/
 web/next-env.d.ts

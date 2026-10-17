@@ -1,0 +1,21 @@
+import { defineConfig, devices } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./e2e",
+  fullyParallel: false,
+  workers: 1,
+  forbidOnly: Boolean(process.env.CI),
+  retries: process.env.CI ? 2 : 0,
+  reporter: process.env.CI ? "github" : "list",
+  globalSetup: "./e2e/global-setup.ts",
+  globalTeardown: "./e2e/global-teardown.ts",
+  use: {
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:13000",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
+  projects: [{
+    name: "chromium",
+    use: { ...devices["Desktop Chrome"] },
+  }],
+});

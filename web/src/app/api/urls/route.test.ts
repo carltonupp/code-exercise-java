@@ -122,6 +122,43 @@ describe("GET /api/urls", () => {
     });
   });
 
+  it("preserves a valid upstream problem and rejects one with a mismatched status", async () => {
+    const problem = {
+      type: "urn:urlshortener:problem:not-found",
+      title: "Link not found",
+      status: 404,
+      detail: "No active link exists for this alias.",
+      instance: "/urls",
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn()
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify(problem), {
+            status: 404,
+            headers: { "Content-Type": "application/problem+json" },
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ ...problem, status: 400 }), {
+            status: 404,
+            headers: { "Content-Type": "application/problem+json" },
+          }),
+        ),
+    );
+
+    const forwarded = await GET(request());
+    const invalid = await GET(request());
+
+    expect(forwarded.status).toBe(404);
+    expect(forwarded.headers.get("Content-Type")).toBe("application/problem+json");
+    await expect(forwarded.json()).resolves.toEqual(problem);
+    expect(invalid.status).toBe(502);
+    await expect(invalid.json()).resolves.toMatchObject({
+      type: "urn:urlshortener:problem:invalid-upstream-response",
+    });
+  });
+
   it.each(["not json", "null", "{}", "[null]"])(
     "returns a bad gateway problem for invalid upstream body %s",
     async (body) => {

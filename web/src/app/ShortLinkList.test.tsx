@@ -33,7 +33,8 @@ describe("ShortLinkList", () => {
         alias: "last-link",
         fullUrl: "https://example.com/last",
         shortUrl: "http://sho.rt/last-link",
-      }], 2, 2, 21));
+      }], 2, 2, 21))
+      .mockResolvedValueOnce(listResponse([firstLink], 1, 2, 21));
     vi.stubGlobal("fetch", fetchMock);
 
     render(<ShortLinkList />);
@@ -59,6 +60,11 @@ describe("ShortLinkList", () => {
       "/api/urls?page=2",
       expect.objectContaining({ cache: "no-store" }),
     );
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+
+    expect(await screen.findByText("first-link")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
   });
 
   it("shows an empty state with a link to the creation form", async () => {
@@ -85,6 +91,24 @@ describe("ShortLinkList", () => {
     render(<ShortLinkList />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("The service is unavailable.");
+  });
+
+  it("shows an error when the list response has an unexpected shape", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: "bad" }))));
+
+    render(<ShortLinkList />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The link service returned an unexpected response.",
+    );
+  });
+
+  it("shows a helpful error when loading the list fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+
+    render(<ShortLinkList />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The link list is unavailable.");
   });
 
   it("reloads the first page when the refresh token changes", async () => {
@@ -136,6 +160,36 @@ describe("ShortLinkList", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("The service is unavailable.");
+    expect(screen.getByText("first-link")).toBeInTheDocument();
+  });
+
+  it("shows a fallback when the deletion response is not valid JSON", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(listResponse([firstLink]))
+      .mockResolvedValueOnce(new Response(null, { status: 500 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ShortLinkList />);
+    await screen.findByText("first-link");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The link list could not be loaded. Please try again.",
+    );
+    expect(screen.getByText("first-link")).toBeInTheDocument();
+  });
+
+  it("shows a helpful error when deleting a link fails to reach the proxy", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(listResponse([firstLink]))
+      .mockRejectedValueOnce(new Error("offline"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ShortLinkList />);
+    await screen.findByText("first-link");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The link could not be deleted.");
     expect(screen.getByText("first-link")).toBeInTheDocument();
   });
 });

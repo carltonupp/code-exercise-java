@@ -94,6 +94,81 @@ describe("ShortLinkForm", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "",
+    "ftp://example.com",
+    "example",
+    "https://-bad.example",
+    "https://example.c",
+    "http://[invalid",
+  ])(
+    "rejects unusable destinations before sending them: %s",
+    (destination) => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+
+      render(<ShortLinkForm />);
+      fireEvent.change(screen.getByLabelText("Long URL"), { target: { value: destination } });
+      fireEvent.click(screen.getByRole("button", { name: "Create short link" }));
+
+      expect(screen.getByText(/Enter a complete web address/)).toBeInTheDocument();
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("accepts a localhost destination with an explicit port", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ shortUrl: "http://sho.rt/local" }), { status: 201 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ShortLinkForm />);
+    fireEvent.change(screen.getByLabelText("Long URL"), {
+      target: { value: "http://localhost:8080/health" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create short link" }));
+
+    expect(await screen.findByText("http://sho.rt/local")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/shorten", expect.objectContaining({
+      body: JSON.stringify({ fullUrl: "http://localhost:8080/health" }),
+    }));
+  });
+
+  it("reports an unexpected successful status instead of accepting the response", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 200 })));
+
+    render(<ShortLinkForm />);
+    fireEvent.change(screen.getByLabelText("Long URL"), {
+      target: { value: "https://example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create short link" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("unexpected response");
+  });
+
+  it("explains when the browser cannot copy the generated short link", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ shortUrl: "http://sho.rt/abc12345" }), { status: 201 }),
+      ),
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockRejectedValue(new Error("clipboard unavailable")) },
+    });
+
+    render(<ShortLinkForm />);
+    fireEvent.change(screen.getByLabelText("Long URL"), {
+      target: { value: "https://example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create short link" }));
+    await screen.findByText("http://sho.rt/abc12345");
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not copy the short link");
+  });
+
   it("explains alias conflicts and keeps the entered values", async () => {
     vi.stubGlobal(
       "fetch",
