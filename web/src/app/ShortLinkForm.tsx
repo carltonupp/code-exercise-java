@@ -11,13 +11,31 @@ function normalizeDestination(value: string) {
   const candidate = hasScheme ? trimmedValue : `https://${trimmedValue}`;
   try {
     const url = new URL(candidate);
-    if ((url.protocol === "http:" || url.protocol === "https:") && url.hostname) {
+    if (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      isUsableHostname(url.hostname)
+    ) {
       return url.toString();
     }
     return null;
   } catch {
     return null;
   }
+}
+
+function isUsableHostname(hostname: string) {
+  const normalized = hostname.toLowerCase().replace(/\.$/, "");
+  if (normalized === "localhost" || (normalized.startsWith("[") && normalized.endsWith("]"))) {
+    return true;
+  }
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(normalized)) return true;
+
+  const labels = normalized.split(".");
+  return (
+    labels.length >= 2 &&
+    labels.every((label) => label.length > 0 && label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)) &&
+    labels[labels.length - 1].length >= 2
+  );
 }
 
 export default function ShortLinkForm({ onCreated }: { onCreated?: () => void }) {
@@ -47,7 +65,9 @@ export default function ShortLinkForm({ onCreated }: { onCreated?: () => void })
     const destination = normalizeDestination(fullUrl);
     const alias = customAlias.trim();
     if (!destination) {
-      setError("Enter a valid HTTP or HTTPS URL.");
+      setFieldErrors([
+        { field: "fullUrl", message: "Enter a complete web address, such as https://example.com." },
+      ]);
       return;
     }
     if (alias && !/^[A-Za-z0-9-]{3,16}$/.test(alias)) {
@@ -67,7 +87,7 @@ export default function ShortLinkForm({ onCreated }: { onCreated?: () => void })
         const problem = await response.json() as Problem;
         switch (problem.type) {
           case "urn:urlshortener:problem:alias-in-use":
-            setError("That alias is already in use. Choose another one.");
+            setError("That alias is unavailable. Choose another one.");
             break;
           case "urn:urlshortener:problem:validation-failed":
             setFieldErrors(problem.errors ?? []);
@@ -154,7 +174,6 @@ export default function ShortLinkForm({ onCreated }: { onCreated?: () => void })
             {isSubmitting ? "Creating…" : "Create short link"}
           </button>
         </div>
-        <p className="setup-note">Connection status checks the API every five seconds.</p>
       </form>
       {shortUrl && (
         <section className="short-link-result" aria-labelledby="result-title" aria-live="polite">

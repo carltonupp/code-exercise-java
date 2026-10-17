@@ -70,4 +70,15 @@ final class ApiProblems {
             "No active link exists for this alias."),
         null);
   }
+
+  static ErrorResponseException aliasDeleted() {
+    return new ErrorResponseException(
+        HttpStatus.NOT_FOUND,
+        problem(
+            HttpStatus.NOT_FOUND,
+            "not-found",
+            "Link deleted",
+            "This short link has been deleted and is no longer available."),
+        null);
+  }
 }

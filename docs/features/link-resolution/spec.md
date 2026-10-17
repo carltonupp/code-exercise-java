@@ -25,14 +25,14 @@ People may keep or share short links after the creator deletes them. A tombstone
 ## Acceptance criteria
 - **AC-1:** Given an active saved short link, when a visitor requests its alias, then the service redirects with HTTP 302 and a `Location` pointing to the saved destination.
 - **AC-2:** Given an active saved short link, when a visitor requests its alias with different letter casing, then the service redirects to the same saved destination.
-- **AC-3:** Given an alias that has never been assigned, when a visitor requests it, then the service returns HTTP 404 and does not redirect.
+- **AC-3:** Given an alias that has never been assigned, when a visitor requests it, then the service returns an HTTP 404 error page explaining that the short link could not be found and does not redirect.
 - **AC-4:** Given a link deleted through the Link Deletion feature, when a visitor requests its alias, then they see a tombstone explaining the link is no longer available. The response uses HTTP 404, matching the existing API contract's not-found status.
 - **AC-5:** Given an active saved link, when it is resolved, then its destination and alias remain unchanged and available for later requests.
 
 ## Behavioral test cases
 - **TC-1:** Create a link, request its alias → receive 302 with the saved destination in `Location`.
 - **TC-2:** Request a saved custom alias with casing changed → receive 302 to the same saved destination.
-- **TC-3:** Request an unknown valid alias → receive 404 and no `Location` header.
+- **TC-3:** Request an unknown valid alias → receive a browser-readable 404 page explaining that the short link could not be found, with no `Location` header.
 - **TC-4:** Request an alias deleted through the Link Deletion feature → receive 404 and see the tombstone page; no redirect occurs.
 - **TC-5:** Request a deleted alias with different casing → receive the same tombstone response.
 - **TC-6:** Resolve an active link repeatedly → each request redirects to the same destination and the link remains available.
@@ -43,4 +43,4 @@ People may keep or share short links after the creator deletes them. A tombstone
 - The existing API contract advertises HTTP 302 for resolution; this plan treats that as the intended redirect behavior.
 - Alias comparison follows [ADR 0001](../../adr/0001-case-insensitive-aliases.md): casing does not affect lookup.
 - Assumption: incoming query parameters are not appended to or merged with the saved destination. Confirm whether query forwarding is needed before implementation if link creators expect campaign or tracking parameters to pass through.
-- Unknown aliases return HTTP 404 with the standard not-found problem; deleted aliases return HTTP 404 with a browser-readable tombstone page, using the existing API status contract.
+- Unknown aliases return HTTP 404 with a browser-readable not-found page; deleted aliases return HTTP 404 with a browser-readable tombstone page. The pages use different text to distinguish never-assigned and deleted aliases while preserving the existing API status contract.

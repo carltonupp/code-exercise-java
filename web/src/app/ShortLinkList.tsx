@@ -101,11 +101,11 @@ export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: num
   }
 
   return (
-    <section className="link-list" aria-labelledby="links-title">
+    <section className="link-list" aria-labelledby="view-links">
       <div className="link-list-heading">
         <div>
           <p className="eyebrow">YOUR LINKS</p>
-          <h2 id="links-title">Active short links</h2>
+          <h2 id="view-links">Active short links</h2>
         </div>
         {result && <p className="result-count" aria-live="polite">
           {result.totalItems} {result.totalItems === 1 ? "result" : "results"}

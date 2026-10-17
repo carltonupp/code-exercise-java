@@ -20,7 +20,7 @@ Open <http://localhost:3000> for the frontend and <http://localhost:8080> for th
 
 The API stores its SQLite database in a named Compose volume, so data remains available after containers are recreated.
 
-The API uses `SHORT_URL_BASE_URL` when returning created short links. It defaults to `http://localhost:8080` for local development; set it to the externally reachable API origin when hosting elsewhere.
+The API uses `SHORT_URL_BASE_URL` when returning created short links. It defaults to `http://localhost:3000`, where the web app resolves active links and displays not-found pages. Set it to the externally reachable web origin when hosting elsewhere.
 
 To rebuild after changes, run `docker compose up --build`. To run either service outside Docker for development, use Java 21 and `cd api && ./gradlew bootRun`, or Node.js 22.12+ and `cd web && npm install && API_BASE_URL=http://localhost:8080 npm run dev`.
 

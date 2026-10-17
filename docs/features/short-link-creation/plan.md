@@ -23,12 +23,12 @@
 - Preserve permanent alias reservation: future link retirement or deletion must not make an assigned alias available again. Do not add retirement/deletion behavior in this feature.
 - Follow [ADR 0002](../../adr/0002-random-generated-aliases.md) for generated alias length, alphabet, random selection, and collision retries.
 - Emit the Micrometer counters defined in ADR 0002 for OTLP export. Count occupied candidates and successfully persisted generated aliases; exclude custom aliases and do not add alias values as metric tags.
-- Build response URLs from `shortener.public-base-url`, configurable with `SHORT_URL_BASE_URL`; default to `http://localhost:8080` for local development and Compose.
+- Build response URLs from `shortener.public-base-url`, configurable with `SHORT_URL_BASE_URL`; default to the web app at `http://localhost:3000` for local development and Compose.
 - Normalize aliases for uniqueness checks so case-only variations conflict, while preserving the user's chosen casing in the short link.
 - Keep uniqueness enforcement at the persistence boundary so concurrent attempts cannot create two links with aliases that match regardless of case.
 - For generated aliases, retry up to ten occupied candidates and return 503 if all attempts collide.
 - Return client errors for invalid destination URLs, malformed aliases, and aliases already in use; do not persist rejected requests.
-- Build the returned short URL from the externally visible API origin/configuration, not an internal Compose hostname.
+- Build the returned short URL from the externally visible web origin/configuration, not an internal Compose hostname.
 
 ### T3 — Web flow
 - Follow [ADR 0004](../../adr/0004-standardize-api-errors-with-problem-details.md) for API and proxy error responses. Generate error types from OpenAPI, handle problems by `type`, and display field-validation messages beside their inputs.

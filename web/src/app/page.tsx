@@ -17,11 +17,10 @@ export default function Home() {
         <p className="description">
           Create a short link, then find and share it here whenever you need it.
         </p>
-        <a className="links-shortcut" href="#links-title">View existing links ↓</a>
+        <a className="links-shortcut" href="#view-links">View existing links ↓</a>
         <ShortLinkForm onCreated={() => setRefreshToken((current) => current + 1)} />
       </section>
       <ShortLinkList key={refreshToken} refreshToken={refreshToken} />
-      <footer>API and frontend are separate apps, connected through the REST contract.</footer>
     </main>
   );
 }

@@ -119,7 +119,7 @@ describe("ShortLinkForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create short link" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "That alias is already in use. Choose another one.",
+      "That alias is unavailable. Choose another one.",
     );
     expect(urlInput).toHaveValue("https://example.com/");
     expect(aliasInput).toHaveValue("taken");

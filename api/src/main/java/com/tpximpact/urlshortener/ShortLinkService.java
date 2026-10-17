@@ -6,10 +6,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ShortLinkService {
@@ -20,16 +22,33 @@ public class ShortLinkService {
   private final AliasGenerator aliasGenerator;
   private final AliasGenerationMetrics aliasGenerationMetrics;
   private final String publicBaseUrl;
+  private final ShortLinkDeletionTransaction deletionTransaction;
+
+  @Autowired
+  public ShortLinkService(
+      ShortUrlRepository repository,
+      AliasGenerator aliasGenerator,
+      AliasGenerationMetrics aliasGenerationMetrics,
+      @Value("${shortener.public-base-url}") String publicBaseUrl,
+      ShortLinkDeletionTransaction deletionTransaction) {
+    this.repository = repository;
+    this.aliasGenerator = aliasGenerator;
+    this.aliasGenerationMetrics = aliasGenerationMetrics;
+    this.publicBaseUrl = publicBaseUrl.replaceAll("/+$", "");
+    this.deletionTransaction = deletionTransaction;
+  }
 
   public ShortLinkService(
       ShortUrlRepository repository,
       AliasGenerator aliasGenerator,
       AliasGenerationMetrics aliasGenerationMetrics,
-      @Value("${shortener.public-base-url}") String publicBaseUrl) {
-    this.repository = repository;
-    this.aliasGenerator = aliasGenerator;
-    this.aliasGenerationMetrics = aliasGenerationMetrics;
-    this.publicBaseUrl = publicBaseUrl.replaceAll("/+$", "");
+      String publicBaseUrl) {
+    this(
+        repository,
+        aliasGenerator,
+        aliasGenerationMetrics,
+        publicBaseUrl,
+        new ShortLinkDeletionTransaction(repository));
   }
 
   public URI create(URI fullUrl, String customAlias) {
@@ -56,15 +75,27 @@ public class ShortLinkService {
         .toList();
   }
 
-  @Transactional
+  @CacheEvict(
+      cacheNames = "alias-resolutions",
+      key = "#alias.toLowerCase(T(java.util.Locale).ROOT)")
   public void delete(String alias) {
     String aliasKey = canonicalAlias(alias);
-    ShortUrl shortUrl = repository.findById(aliasKey).orElseThrow(ApiProblems::aliasNotFound);
-    if (shortUrl.isDeleted()) {
-      throw ApiProblems.aliasNotFound();
-    }
-    shortUrl.markDeleted();
-    repository.saveAndFlush(shortUrl);
+    deletionTransaction.delete(aliasKey);
+  }
+
+  @Cacheable(
+      cacheNames = "alias-resolutions",
+      key = "#alias.toLowerCase(T(java.util.Locale).ROOT)",
+      unless = "#result == null")
+  public AliasResolution resolve(String alias) {
+    String aliasKey = canonicalAlias(alias);
+    return repository
+        .findById(aliasKey)
+        .map(
+            shortUrl ->
+                new AliasResolution(
+                    shortUrl.isDeleted() ? null : shortUrl.getFullUrl(), shortUrl.isDeleted()))
+        .orElse(null);
   }
 
   private void validateFullUrl(URI fullUrl) {
