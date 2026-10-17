@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -24,6 +25,19 @@ import org.springframework.test.web.servlet.ResultActions;
 class ApiProblemHandlerTests {
   @Autowired private MockMvc mockMvc;
   @MockitoBean private ShortLinkService service;
+
+  @Test
+  void successfulCreationReturnsCreatedShortUrl() throws Exception {
+    when(service.create(any(), any())).thenReturn(URI.create("http://sho.rt/my-link"));
+
+    mockMvc
+        .perform(
+            post("/shorten")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fullUrl\":\"https://example.com\",\"customAlias\":\"my-link\"}"))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.shortUrl").value("http://sho.rt/my-link"));
+  }
 
   @Test
   void aliasConflictUsesStableProblemType() throws Exception {

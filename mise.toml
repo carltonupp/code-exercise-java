@@ -1,0 +1,27 @@
+[tools]
+java = "temurin-21"
+node = "22.12.0"
+
+[tasks.setup]
+description = "Install frontend dependencies"
+run = "npm ci --prefix web"
+
+[tasks.api]
+description = "Run the Spring Boot API"
+run = "cd api && ./gradlew bootRun"
+
+[tasks.web]
+description = "Run the Next.js frontend"
+run = "npm run dev --prefix web"
+
+[tasks.stack]
+description = "Build and run the full stack with Docker Compose"
+run = "docker compose up --build"
+
+[tasks.test-api]
+description = "Format-check and test the API"
+run = "cd api && ./gradlew spotlessCheck test"
+
+[tasks.test-web]
+description = "Run frontend tests, lint, and type checks"
+run = "npm test --prefix web && npm run lint --prefix web && npm run typecheck --prefix web"

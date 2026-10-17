@@ -33,6 +33,19 @@ docker compose down
 
 To remove the database volume too, run `docker compose down -v`. **This permanently deletes the saved links.**
 
+## Declarative development environment
+
+The repository uses [mise](https://mise.jdx.dev/) to declare its local Java and Node.js toolchains in `mise.toml`. Install mise using its [installation guide](https://mise.jdx.dev/getting-started.html), then from the repository root run:
+
+```sh
+mise install
+mise run setup
+```
+
+This installs Temurin Java 21, Node.js 22.12.0, and the frontend dependencies. Docker is required for the Compose stack and is managed separately by Docker Desktop or Docker Engine.
+
+Run the API and frontend in separate terminals with `mise run api` and `mise run web`. Use `mise run stack` to build and run both services with Docker Compose. Common checks are available as `mise run test-api` and `mise run test-web`.
+
 ## How it fits together
 
 The UI and API are separate applications. The browser talks to the Next.js app; its server routes proxy create, list, and delete requests to the Spring Boot API. Short links use the web app’s public origin. For a browser visit, the web app asks the API to resolve the alias, forwards active-link redirects, and renders the deleted or not-found page itself.
