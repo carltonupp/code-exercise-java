@@ -47,6 +47,7 @@ class ShortLinkListingTests {
         repository,
         new AliasGenerator(),
         new AliasGenerationMetrics(new io.micrometer.core.instrument.simple.SimpleMeterRegistry()),
-        "http://sho.rt");
+        "http://sho.rt",
+        mock(ShortLinkDeletionTransaction.class));
   }
 }

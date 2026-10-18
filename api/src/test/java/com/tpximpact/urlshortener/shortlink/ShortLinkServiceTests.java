@@ -33,7 +33,8 @@ class ShortLinkServiceTests {
             repository,
             new AliasGenerator(),
             new AliasGenerationMetrics(new SimpleMeterRegistry()),
-            "http://sho.rt/");
+            "http://sho.rt/",
+            mock(ShortLinkDeletionTransaction.class));
 
     URI shortUrl = service.create(URI.create("https://example.com/article"), "Spring-Link");
 
@@ -139,7 +140,8 @@ class ShortLinkServiceTests {
             repository,
             new AliasGenerator(new SequenceRandom(0, 1)),
             new AliasGenerationMetrics(meterRegistry),
-            "http://sho.rt");
+            "http://sho.rt",
+            mock(ShortLinkDeletionTransaction.class));
 
     assertEquals(
         URI.create("http://sho.rt/bbbbbbbb"),
@@ -160,7 +162,8 @@ class ShortLinkServiceTests {
             repository,
             new AliasGenerator(new SequenceRandom(0)),
             new AliasGenerationMetrics(new SimpleMeterRegistry()),
-            "http://sho.rt");
+            "http://sho.rt",
+            mock(ShortLinkDeletionTransaction.class));
 
     assertSame(
         failure,
@@ -201,7 +204,8 @@ class ShortLinkServiceTests {
             mock(ShortUrlRepository.class),
             new AliasGenerator(),
             new AliasGenerationMetrics(new SimpleMeterRegistry()),
-            "http://sho.rt");
+            "http://sho.rt",
+            mock(ShortLinkDeletionTransaction.class));
 
     ErrorResponseException exception =
         assertThrows(
@@ -225,7 +229,8 @@ class ShortLinkServiceTests {
             repository,
             new AliasGenerator(new SequenceRandom(0)),
             new AliasGenerationMetrics(new SimpleMeterRegistry()),
-            "http://sho.rt");
+            "http://sho.rt",
+            mock(ShortLinkDeletionTransaction.class));
 
     ErrorResponseException exception =
         assertThrows(
@@ -243,7 +248,8 @@ class ShortLinkServiceTests {
         repository,
         new AliasGenerator(),
         new AliasGenerationMetrics(new SimpleMeterRegistry()),
-        "http://sho.rt");
+        "http://sho.rt",
+        mock(ShortLinkDeletionTransaction.class));
   }
 
   @Test
@@ -253,7 +259,12 @@ class ShortLinkServiceTests {
     AliasGenerationMetrics metrics = new AliasGenerationMetrics(meterRegistry);
     AliasGenerator generator = new AliasGenerator(new SequenceRandom(0, 1, 2));
     ShortLinkService service =
-        new ShortLinkService(repository, generator, metrics, "http://sho.rt");
+        new ShortLinkService(
+            repository,
+            generator,
+            metrics,
+            "http://sho.rt",
+            mock(ShortLinkDeletionTransaction.class));
 
     when(repository.existsById("aaaaaaaa")).thenReturn(true);
     when(repository.existsById("bbbbbbbb")).thenReturn(true);

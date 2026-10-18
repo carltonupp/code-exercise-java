@@ -18,13 +18,13 @@ import org.springframework.web.ErrorResponseException;
 
 class ShortLinkDeletionTests {
   @Test
-  void deleteMarksLinkDeletedAndErasesDestinationUsingCaseInsensitiveAlias() {
+  void deleteMarksLinkDeletedAndErasesDestination() {
     ShortUrlRepository repository = mock(ShortUrlRepository.class);
     ShortUrl shortUrl = new ShortUrl("my-alias", "My-Alias", URI.create("https://example.com"));
     when(repository.findById("my-alias")).thenReturn(Optional.of(shortUrl));
-    ShortLinkService service = service(repository);
+    ShortLinkDeletionTransaction transaction = new ShortLinkDeletionTransaction(repository);
 
-    service.delete("MY-ALIAS");
+    transaction.delete("my-alias");
 
     verify(repository).saveAndFlush(shortUrl);
     assertTrue(shortUrl.isDeleted());
@@ -38,15 +38,32 @@ class ShortLinkDeletionTests {
     ShortUrl deleted = new ShortUrl("gone", "Gone", URI.create("https://example.com"));
     deleted.markDeleted();
     when(repository.findById("gone")).thenReturn(Optional.of(deleted));
-    ShortLinkService service = service(repository);
+    ShortLinkDeletionTransaction transaction = new ShortLinkDeletionTransaction(repository);
 
     ErrorResponseException unknown =
-        assertThrows(ErrorResponseException.class, () -> service.delete("missing"));
+        assertThrows(ErrorResponseException.class, () -> transaction.delete("missing"));
     ErrorResponseException repeated =
-        assertThrows(ErrorResponseException.class, () -> service.delete("gone"));
+        assertThrows(ErrorResponseException.class, () -> transaction.delete("gone"));
 
     assertEquals(HttpStatus.NOT_FOUND, unknown.getStatusCode());
     assertEquals(HttpStatus.NOT_FOUND, repeated.getStatusCode());
+  }
+
+  @Test
+  void deleteDelegatesToTransactionUsingCanonicalAlias() {
+    ShortLinkDeletionTransaction transaction = mock(ShortLinkDeletionTransaction.class);
+    ShortLinkService service =
+        new ShortLinkService(
+            mock(ShortUrlRepository.class),
+            new AliasGenerator(),
+            new AliasGenerationMetrics(
+                new io.micrometer.core.instrument.simple.SimpleMeterRegistry()),
+            "http://sho.rt",
+            transaction);
+
+    service.delete("MY-ALIAS");
+
+    verify(transaction).delete("my-alias");
   }
 
   @Test
@@ -70,6 +87,7 @@ class ShortLinkDeletionTests {
         repository,
         new AliasGenerator(),
         new AliasGenerationMetrics(new io.micrometer.core.instrument.simple.SimpleMeterRegistry()),
-        "http://sho.rt");
+        "http://sho.rt",
+        mock(ShortLinkDeletionTransaction.class));
   }
 }

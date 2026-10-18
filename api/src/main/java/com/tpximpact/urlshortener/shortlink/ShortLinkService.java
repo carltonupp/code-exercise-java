@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,7 +25,6 @@ public class ShortLinkService {
   private final String publicBaseUrl;
   private final ShortLinkDeletionTransaction deletionTransaction;
 
-  @Autowired
   public ShortLinkService(
       ShortUrlRepository repository,
       AliasGenerator aliasGenerator,
@@ -38,19 +36,6 @@ public class ShortLinkService {
     this.aliasGenerationMetrics = aliasGenerationMetrics;
     this.publicBaseUrl = publicBaseUrl.replaceAll("/+$", "");
     this.deletionTransaction = deletionTransaction;
-  }
-
-  public ShortLinkService(
-      ShortUrlRepository repository,
-      AliasGenerator aliasGenerator,
-      AliasGenerationMetrics aliasGenerationMetrics,
-      String publicBaseUrl) {
-    this(
-        repository,
-        aliasGenerator,
-        aliasGenerationMetrics,
-        publicBaseUrl,
-        new ShortLinkDeletionTransaction(repository));
   }
 
   public URI create(URI fullUrl, String customAlias) {
