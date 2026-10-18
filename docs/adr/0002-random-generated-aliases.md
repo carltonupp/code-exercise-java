@@ -13,7 +13,7 @@ When no custom alias is supplied, generate an alias by selecting eight character
 
 Instrument generated alias allocation with Micrometer counters: `urlshortener.alias.generation.collisions` increments for each occupied candidate, and `urlshortener.alias.generation.successes` increments for each available candidate successfully persisted. These counters cover generated aliases only, not user-supplied aliases. Calculate the candidate collision rate as `collisions / (collisions + successes)` over the same time window. Do not attach the alias itself or other high-cardinality values as metric tags. Use the collision rate trend to assess when the alias length or generation approach needs to change.
 
-The API registers these counters with Micrometer and includes the OTLP metrics registry. Export is disabled by default and is enabled with an externally supplied collector URL. Metrics use OTLP/HTTP protobuf; the repository does not provision a collector. The service resource is named from `spring.application.name` (`urlshortener`). See the [OTLP configuration instructions](../../README.md#otlp-metrics).
+The API registers these counters with Micrometer and includes the OTLP metrics registry. Export is disabled by default and is enabled with an externally supplied collector URL. Metrics use OTLP/HTTP protobuf; the repository does not provision a collector. The service resource is named from `spring.application.name` (`urlshortener`). See the [OTLP configuration instructions](../configuration.md#otlp-metrics).
 
 ## Alternatives considered
 - **Sequential aliases:** simple and collision-free, but expose approximate creation order and volume.
