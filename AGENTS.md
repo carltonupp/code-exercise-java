@@ -2,7 +2,7 @@
 
 ## Project Structure
 
-This repository contains a decoupled URL shortener project. `api/` is the Spring Boot 4 API, built with Gradle and Java 21; production code is under `api/src/main/java/com/tpximpact/urlshortener/` and tests under `api/src/test/java/com/tpximpact/urlshortener/`. `web/` is the Next.js App Router frontend; pages and shared styles live in `web/src/app/`. `openapi.yaml` defines the API contract. Keep API and UI changes in their respective modules and update the contract when endpoint behavior changes.
+This repository contains a decoupled URL shortener project. `api/` is the Spring Boot 4 API, built with Gradle and Java 21; production code is under `api/src/main/java/com/tpximpact/urlshortener/` and tests under `api/src/test/java/com/tpximpact/urlshortener/`. `web/` is the Next.js App Router frontend; routes and UI components live in `web/src/app/`, browser API functions and state hooks in `web/src/features/short-links/`, server-only API adapters in `web/src/server/`, and shared base styles in `web/public/styles/`. `openapi.yaml` defines the API contract. Keep API and UI changes in their respective modules and update the contract when endpoint behavior changes.
 
 ## Build, Test, and Development
 
@@ -12,7 +12,7 @@ This repository contains a decoupled URL shortener project. `api/` is the Spring
 - `cd web && npm run lint` checks frontend style; `npm run build` creates a production build.
 - For source development, use `cd api && ./gradlew bootRun` or `cd web && npm install && npm run dev`.
 
-Compose requires Docker with the Compose plugin. Its named `api-data` volume holds SQLite data across container recreations. Direct development requires Java 21 and Node.js 22.12 or newer. Set `API_BASE_URL` for the Next.js health proxy when the API is not at `http://localhost:8080`; Compose sets it to `http://api:8080`.
+Compose requires Docker with the Compose plugin. Its named `api-data` volume holds SQLite data across container recreations. Direct development requires Java 21 and Node.js 22.12 or newer. Set `API_BASE_URL` for the Next.js server routes when the API is not at `http://localhost:8080`; Compose sets it to `http://api:8080`.
 
 ## OpenAPI and Generated Code
 
@@ -28,7 +28,7 @@ Format Java with Spotless using Google Java Format (`./gradlew spotlessApply` to
 
 ## Testing Guidelines
 
-Add JUnit 5 tests under `api/src/test/java`, using `*Tests.java` names consistent with the generated `UrlshortenerApplicationTests`. Add frontend tests with Vitest and React Testing Library under `web/src/`, using `*.test.tsx` names. `cd api && ./gradlew spotlessCheck test` validates the OpenAPI file, compiles generated API interfaces/models, and runs API tests. `cd web && npm test && npm run lint && npm run typecheck` checks frontend tests, lint, and TypeScript. The pre-commit hook runs these checks; Java 21, Node.js 22.12+, and `cd web && npm install` are required for commits. Cover API contract behavior and meaningful error cases as endpoints are implemented.
+Add JUnit 5 tests under `api/src/test/java`, using `*Tests.java` names consistent with the generated `UrlshortenerApplicationTests`. Add frontend tests with Vitest and React Testing Library under `web/src/`, using `*.test.tsx` for components and `*.test.ts` for route handlers and other TypeScript modules. Browser end-to-end tests live under `web/e2e/` and run with `cd web && npm run test:e2e`. `cd api && ./gradlew spotlessCheck test` validates the OpenAPI file, compiles generated API interfaces/models, and runs API tests. `cd web && npm test && npm run lint && npm run typecheck` checks frontend tests, lint, and TypeScript. The pre-commit hook runs these checks; Java 21, Node.js 22.12+, and `cd web && npm install` are required for commits. Cover API contract behavior and meaningful error cases as endpoints are implemented.
 
 ## Commits and Pull Requests
 

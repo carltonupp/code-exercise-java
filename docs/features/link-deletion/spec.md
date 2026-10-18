@@ -1,6 +1,6 @@
 # Link Deletion — Product Specification
 
-Status: Draft
+Status: Implemented
 
 ## Summary
 Creators can delete a short link so it no longer sends visitors to its saved destination. The alias remains reserved, the link disappears from the active list, and Link Resolution uses the deleted state to show visitors a tombstone.
@@ -23,7 +23,7 @@ People may keep or share short links after deletion. A tombstone tells them the 
 - Excluded: link restoration, destination editing, multiple user accounts, analytics, and deletion of the tombstone itself.
 
 ## Acceptance criteria
-- **AC-1:** Given an active short link, when its creator deletes it, then deletion succeeds and future visits no longer redirect to its saved destination.
+- **AC-1:** Given an active short link, when its creator deletes it, then deletion succeeds, the saved destination is cleared, and subsequent visits show the tombstone, subject to the bounded cache-race limitation below.
 - **AC-2:** Given a deleted short link, when the creator views the active link list, then the deleted link is no longer included.
 - **AC-3:** Given a deleted short link, when someone attempts to create another link with the same alias regardless of casing, then the alias remains unavailable.
 - **AC-4:** Given an alias that was never assigned, when it is requested, then it is treated as not found rather than as a deleted link.
@@ -32,7 +32,7 @@ People may keep or share short links after deletion. A tombstone tells them the 
 - **TC-1:** Delete an active link → deletion succeeds and the link disappears from the active list.
 - **TC-2:** Delete a link, then submit its alias for a new link with different casing → creation is rejected because the alias remains reserved.
 - **TC-3:** Request an alias that was never assigned → receive the ordinary not-found result, not the tombstone.
-- **TC-4:** Delete an already deleted link → return a consistent not-found or already-deleted result without restoring or reassigning the alias. (Exact response is an open question.)
+- **TC-4:** Delete an already deleted link → return HTTP 404 with the not-found problem, without restoring or reassigning the alias.
 
 ## Constraints, assumptions, and open questions
 - Deleted aliases remain reserved permanently, following [ADR 0003](../../adr/0003-use-normalized-alias-as-short-link-primary-key.md).
@@ -40,3 +40,5 @@ People may keep or share short links after deletion. A tombstone tells them the 
 - Deletion clears the saved destination while preserving the alias and deleted state.
 - Repeating a delete request returns not found, matching requests for unknown aliases.
 - The application has one user; deletion does not require per-user ownership checks or account identity.
+
+- Cache eviction follows the successful deletion commit. A resolution request already in flight can repopulate an active cache entry after eviction, so a visitor can still be redirected until that entry expires (60 seconds after it is cached). Stronger deletion consistency is deferred in [ADR 0007](../../adr/0007-cache-link-resolution-lookups.md).

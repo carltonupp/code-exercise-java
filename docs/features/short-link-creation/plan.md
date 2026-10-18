@@ -22,7 +22,7 @@
 - Keep the creation controller scoped to its generated OpenAPI interface so it does not require implementing unrelated list/delete operations in this feature.
 - Preserve permanent alias reservation: future link retirement or deletion must not make an assigned alias available again. Do not add retirement/deletion behavior in this feature.
 - Follow [ADR 0002](../../adr/0002-random-generated-aliases.md) for generated alias length, alphabet, random selection, and collision retries.
-- Emit the Micrometer counters defined in ADR 0002 for OTLP export. Count occupied candidates and successfully persisted generated aliases; exclude custom aliases and do not add alias values as metric tags.
+- Register the Micrometer counters defined in ADR 0002. OTLP export is not configured in this implementation snapshot. Count occupied candidates and successfully persisted generated aliases; exclude custom aliases and do not add alias values as metric tags.
 - Build response URLs from `shortener.public-base-url`, configurable with `SHORT_URL_BASE_URL`; default to the web app at `http://localhost:3000` for local development and Compose.
 - Normalize aliases for uniqueness checks so case-only variations conflict, while preserving the user's chosen casing in the short link.
 - Keep uniqueness enforcement at the persistence boundary so concurrent attempts cannot create two links with aliases that match regardless of case.
@@ -47,5 +47,7 @@
 
 ## Completion evidence
 - T1–T3 are implemented: the OpenAPI contract and generated types, API creation flow, and web form/proxy are complete.
-- API formatting, contract validation, and tests passed. Frontend tests (22), lint, typecheck, and production build passed.
+- At the original feature handoff, API formatting, contract validation, and tests passed; the then-current 22 frontend tests, lint, typecheck, and production build passed. This is historical completion evidence, not the current suite size.
 - Compose end-to-end check passed: `/api/health` returned 200, and `POST /api/shorten` through the web proxy returned 201 with a generated short URL.
+
+- As of 2026-10-18, the creation controller maps generated request/response models while the service returns a short URL or raises domain exceptions; `ApiProblemHandler` performs HTTP error mapping. Browser requests and submission state live in `web/src/features/short-links/`, and successful creation explicitly refreshes page one without remounting the list.

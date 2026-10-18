@@ -11,7 +11,9 @@ With lowercase letters and digits, an eight-character alias has `36^8 = 2,821,10
 ## Decision
 When no custom alias is supplied, generate an alias by selecting eight characters uniformly at random from `abcdefghijklmnopqrstuvwxyz0123456789`. Check uniqueness using the case-insensitive alias rule. If the candidate is already in use, generate another candidate and retry, up to ten candidates for a request. Only return a link after its alias has been saved successfully. If all ten candidates collide, return a temporary service error so the caller can retry later.
 
-Instrument generated alias allocation with Micrometer counters, exported through OTLP: `urlshortener.alias.generation.collisions` increments for each occupied candidate, and `urlshortener.alias.generation.successes` increments for each available candidate successfully persisted. These counters cover generated aliases only, not user-supplied aliases. Calculate the candidate collision rate as `collisions / (collisions + successes)` over the same time window. Do not attach the alias itself or other high-cardinality values as metric tags. Use the collision rate trend to assess when the alias length or generation approach needs to change.
+Instrument generated alias allocation with Micrometer counters: `urlshortener.alias.generation.collisions` increments for each occupied candidate, and `urlshortener.alias.generation.successes` increments for each available candidate successfully persisted. These counters cover generated aliases only, not user-supplied aliases. Calculate the candidate collision rate as `collisions / (collisions + successes)` over the same time window. Do not attach the alias itself or other high-cardinality values as metric tags. Use the collision rate trend to assess when the alias length or generation approach needs to change.
+
+The API registers these counters with Micrometer. OTLP export is not configured in the current implementation; enabling an exporter is separate observability work.
 
 ## Alternatives considered
 - **Sequential aliases:** simple and collision-free, but expose approximate creation order and volume.

@@ -1,13 +1,15 @@
 # Link Resolution — Implementation Plan
 
+Status: Implemented; validation evidence and limits are recorded below.
+
 ## Dependency
-- Depends on [Link Deletion](../link-deletion/plan.md) to define and implement the deleted-link state and permanent alias reservation. Complete Link Listing T1, Link Deletion T1, then Link Resolution T1 because they update the shared `openapi.yaml`; complete Link Deletion T2 before Link Resolution T2 because resolution consumes the persisted deleted state.
+- Depends on [Link Deletion](../link-deletion/plan.md) to define and implement the deleted-link state and permanent alias reservation. The contract remains unchanged. Resolution consumes the persisted deleted state delivered by Link Deletion T2.
 
 ## Task sequence
 | ID | Outcome and acceptance criteria | Dependencies | Area/owner | Parallelizable | Completion evidence |
 |---|---|---|---|---|---|
 | T1 | Confirm the existing resolution contract for `GET /{alias}`: 302 redirect for active links and 404 for deleted or never-assigned aliases (AC-1–AC-4). Regenerate contract-derived Java artifacts after Link Deletion T1. | Link Deletion T1 | OpenAPI contract and generated API | No | Contract validation and generated interface preserve the existing response codes. |
-| T2 | Implement resolution using the active and deleted states delivered by Link Deletion T2. Cache known alias states by normalized alias with a bounded TTL using Spring Cache and Caffeine. The API returns a 302 for active links and distinguishable 404 Problem Details for deleted and never-assigned aliases (AC-1–AC-5). | T1, Link Deletion T2 | API | No | API behavior verifies cache hits, case variants sharing a cache entry, unknown aliases, redirect status, `Location`, and distinct deleted/not-found responses; API formatting and tests pass. |
+| T2 | Implement resolution using the active and deleted states delivered by Link Deletion T2. Cache known alias states by normalized alias with a bounded TTL using Spring Cache and Caffeine. The API returns a 302 for active links and distinguishable 404 Problem Details for deleted and never-assigned aliases (AC-1–AC-5). | T1, Link Deletion T2 | API | No | Service and controller tests verify canonical lookup, active/deleted/missing results, redirect status, `Location`, and distinct deleted/not-found responses. Cache configuration is implemented; dedicated cache-hit and eviction tests remain a coverage gap. |
 | T3 | Route public short links through the web application. Forward active redirects from the API and render distinct deleted and not-found 404 pages in the UI (AC-1–AC-5). | T2 | Web and Compose | No | A Compose smoke check confirms active aliases redirect, deleted aliases show the UI tombstone, and unknown aliases show the UI not-found page. |
 
 ## Integration and validation
@@ -24,5 +26,11 @@
 - Treat the destination as stored; do not forward the request's query string unless the product decision changes.
 - At integration, check that redirect responses are not cached beyond the intended 302 behavior and that unknown aliases cannot fall through to a redirect or tombstone.
 
-## Open decision
-- Confirm whether incoming query parameters should be discarded (the current assumption) or appended to the saved destination. If this changes, update the product specification and redirect acceptance cases before implementation.
+## Implemented query behavior
+- Incoming query parameters are discarded; the saved destination is used as-is. Query forwarding is a future product decision and would require updated acceptance cases.
+
+## Completion evidence
+- T1–T3 are implemented. `ShortLinkRedirectController` implements only the generated redirect interface; alias lookup and caching remain in the service.
+- `web/src/server/linkResolution.ts` maps API outcomes to active, deleted, not-found, or unavailable states. It contains the title-based compatibility check required by the existing indistinguishable 404 problem types, as documented in ADR 0004.
+- API service/controller tests verify resolution states and HTTP behavior. Web route tests cover redirects, distinct 404 pages, malformed responses, and timeout/unavailable handling. The Playwright lifecycle scenario verifies an active redirect and the subsequent deleted-link page, including the shared stylesheet.
+- API checks, frontend tests/lint/typecheck/build, and the two Playwright scenarios passed on 2026-10-18. Automated cache-hit, eviction-timing, concurrent-race, and explicit query-forwarding tests are not present.

@@ -1,6 +1,6 @@
 # Link Resolution — Product Specification
 
-Status: Draft
+Status: Implemented
 
 ## Summary
 When someone opens an active short link, send them to its saved destination. If the link was deleted, show the tombstone provided by the Link Deletion feature. If the alias has never been assigned, return a not-found response.
@@ -26,7 +26,7 @@ People may keep or share short links after the creator deletes them. A tombstone
 - **AC-1:** Given an active saved short link, when a visitor requests its alias, then the service redirects with HTTP 302 and a `Location` pointing to the saved destination.
 - **AC-2:** Given an active saved short link, when a visitor requests its alias with different letter casing, then the service redirects to the same saved destination.
 - **AC-3:** Given an alias that has never been assigned, when a visitor requests it, then the service returns an HTTP 404 error page explaining that the short link could not be found and does not redirect.
-- **AC-4:** Given a link deleted through the Link Deletion feature, when a visitor requests its alias, then they see a tombstone explaining the link is no longer available. The response uses HTTP 404, matching the existing API contract's not-found status.
+- **AC-4:** Given a link deleted through the Link Deletion feature, when a visitor requests its alias, then they see a tombstone explaining the link is no longer available, subject to the bounded cache-race limitation below. The response uses HTTP 404, matching the existing API contract's not-found status.
 - **AC-5:** Given an active saved link, when it is resolved, then its destination and alias remain unchanged and available for later requests.
 
 ## Behavioral test cases
@@ -42,5 +42,7 @@ People may keep or share short links after the creator deletes them. A tombstone
 - This feature depends on [Link Deletion](../link-deletion/spec.md) to retain a deleted-link state and reserve its alias, following [ADR 0003](../../adr/0003-use-normalized-alias-as-short-link-primary-key.md).
 - The existing API contract advertises HTTP 302 for resolution; this plan treats that as the intended redirect behavior.
 - Alias comparison follows [ADR 0001](../../adr/0001-case-insensitive-aliases.md): casing does not affect lookup.
-- Assumption: incoming query parameters are not appended to or merged with the saved destination. Confirm whether query forwarding is needed before implementation if link creators expect campaign or tracking parameters to pass through.
+- Incoming query parameters are not appended to or merged with the saved destination. The implementation uses the saved destination as-is; adding query forwarding would require a product decision.
 - Unknown aliases return HTTP 404 with a browser-readable not-found page; deleted aliases return HTTP 404 with a browser-readable tombstone page. The pages use different text to distinguish never-assigned and deleted aliases while preserving the existing API status contract.
+
+- A lookup already in flight during deletion may repopulate a stale active cache entry after eviction. That entry can redirect visitors until its 60-second expiry, as accepted in [ADR 0007](../../adr/0007-cache-link-resolution-lookups.md).

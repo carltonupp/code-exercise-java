@@ -4,7 +4,7 @@
 - Date: 2026-10-17
 
 ## Context
-The creation form needs predictable error responses to explain failures and associate validation messages with inputs. Error bodies are currently absent from the OpenAPI contract, so the generated client cannot describe them. Matching human-readable error messages also makes client behavior dependent on wording.
+The creation form needs predictable error responses to explain failures and associate validation messages with inputs. Defining error bodies in the OpenAPI contract lets the generated client describe them. Matching human-readable error messages also makes client behavior dependent on wording.
 
 Spring provides `ProblemDetail` support for [RFC 9457: Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457.html). This supplies a standard response format that can be represented in OpenAPI and used by the generated client.
 
@@ -44,7 +44,13 @@ For field-validation failures, add an optional `errors` extension containing an 
 }
 ```
 
-Describe the shared problem schema and its field-error extension in OpenAPI and reference it from error responses. Generate client types from that contract. Clients must use `type` for problem-specific logic rather than parsing `title`, `detail`, or field-message text.
+Describe the shared problem schema and its field-error extension in OpenAPI and reference it from error responses. Generate client types from that contract. Clients use `type` for problem-specific logic rather than parsing `title`, `detail`, or field-message text, except for the existing resolution compatibility case described below.
+
+## Resolution compatibility exception
+
+Deleted and unknown aliases currently share HTTP 404 and the problem type `urn:urlshortener:problem:not-found`. The API distinguishes them with the titles `Link deleted` and `Link not found`. To preserve the existing contract and distinct browser pages, `web/src/server/linkResolution.ts` contains the single title-based compatibility check. Route tests cover both responses and the fallback for malformed 404 bodies. Other clients should continue to use stable problem types where those types distinguish the outcome.
+
+This is a known wording dependency: changing the deleted-link title can change which browser page appears. Removing that dependency would require an explicitly agreed API response change; no such change is part of the current implementation.
 
 ## Alternatives considered
 - **A custom JSON error envelope:** can provide the same information, but introduces a proprietary format where Spring already supports a standard.

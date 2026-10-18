@@ -11,7 +11,7 @@ Short links can be embedded in slide decks and videos, then viewed or shared lon
 Physically deleting a link removes the information needed to distinguish those states. Keeping the full destination after deletion is unnecessary for serving a tombstone and retains data the link creator intended to delete.
 
 ## Decision
-Deletion changes a link into a tombstone. Retain its normalized alias key and deleted state so the alias remains reserved and resolves to a tombstone page. Use the existing HTTP 404 response status for deleted aliases to keep the API contract unchanged; distinguish a deleted link from an unknown alias through the browser-readable response body. Remove the saved destination when the link is deleted. Unknown aliases continue to return the standard HTTP 404 not-found problem.
+Deletion changes a link into a tombstone. Retain its normalized alias key and deleted state so the alias remains reserved and resolves to a tombstone page. Use the existing HTTP 404 response status for deleted aliases to keep the API contract unchanged; distinguish a deleted link from an unknown alias through the API Problem Details title, which the web adapter uses to select the browser page as documented in [ADR 0004](0004-standardize-api-errors-with-problem-details.md). Clear the saved destination by replacing `full_url` with an empty string in its existing non-null column. The row retains the normalized alias key, display alias, creation timestamp, and deleted marker. Unknown aliases continue to return the standard HTTP 404 not-found problem.
 
 ## Alternatives considered
 - **Physically delete the link row:** frees the stored destination, but makes deleted aliases indistinguishable from aliases that were never assigned and cannot serve a tombstone.
@@ -20,4 +20,4 @@ Deletion changes a link into a tombstone. Retain its normalized alias key and de
 
 ## Consequences
 - Positive: Old shared links explain that they were deleted, unknown aliases remain distinguishable, and deleted aliases cannot unexpectedly point to new destinations.
-- Tradeoffs: Tombstone records occupy storage indefinitely. The destination must be nullable or stored separately so deletion can erase it while preserving the alias reservation.
+- Tradeoffs: Tombstone records occupy storage indefinitely. The current schema stores an empty string as the cleared destination; resolution checks the deleted marker before using the destination. No nullable-column or separate-table migration is required.

@@ -1,12 +1,12 @@
 # Link Listing — Product Specification
 
-Status: Draft
+Status: Implemented
 
 ## Summary
 The single user of this application can view the active short links created in it, so they can find and manage links after the creation form has closed.
 
 ## Why this matters
-The creation flow currently shows a link only when it is created. A persistent list lets the operator return to active links, find one to share, and find one to delete. This application is planned for a single user, so the list is shared across the app rather than partitioned by accounts or browser profiles.
+The creation result shows a link when it is created. The persistent list lets the operator return to active links, find one to share, and find one to delete. This application supports a single shared user context, so the list is shared across the app rather than partitioned by accounts or browser profiles.
 
 ## Personas
 - **Application user (assumption based on the stated single-user context):** wants to return to links created earlier in the application and manage their status.
@@ -40,5 +40,5 @@ The creation flow currently shows a link only when it is created. A persistent l
 
 ## Constraints, assumptions, and open questions
 - The application has one user; the list contains all active links created by the application and does not require ownership tokens or accounts.
-- Assumption: the list shows 20 links per page. Confirm if a different page size is preferred.
-- Confirm whether newest-first ordering is sufficient or search and sorting controls are needed.
+- The list shows 20 links per page, following [ADR 0008](../../adr/0008-paginate-link-list-at-web-boundary.md).
+- The implemented order is newest first, with normalized alias as a deterministic tie-breaker. Search and alternative sorting controls would require a separate product decision.

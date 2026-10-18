@@ -19,6 +19,6 @@ Implement pagination in a Next.js server route. The existing `GET /urls` operati
 ## Consequences
 - The browser receives only one page and its metadata at a time; pagination logic stays in the web server.
 - `openapi.yaml`, generated API code, and the existing `/urls` operation remain unchanged.
-- This is not database pagination. Every page request transfers the full active-link array from the API to the Next.js server and requires it to sort/slice that array.
+- This is not database pagination. Every page request transfers the full active-link array from the API to the Next.js server and requires the web server to slice that array. The API supplies the ordering.
 - If the collection grows enough for this transfer or processing to matter, revisit the API contract constraint and adopt API/database pagination.
 - The default page size is 20; newest-first ordering is required for stable user expectations.

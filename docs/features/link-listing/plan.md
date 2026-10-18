@@ -1,5 +1,7 @@
 # Link Listing — Implementation Plan
 
+Status: Implemented; validation evidence and limits are recorded below.
+
 ## Task sequence
 | ID | Outcome and acceptance criteria | Dependencies | Area/owner | Parallelizable | Completion evidence |
 |---|---|---|---|---|---|
@@ -12,4 +14,10 @@
 - Keep `openapi.yaml` and generated clients unchanged, as recorded in [ADR 0008](../../adr/0008-paginate-link-list-at-web-boundary.md). Pagination happens in a Next.js server route: the API still returns the complete active collection, while the browser receives one page and metadata.
 - Use 20 links per page. Sort newest first and use a stable tie-breaker so links created at the same time do not move between pages unpredictably.
 - Keep the task sequence serial: T2 depends on the API's ordering and active-only behavior, and T3 depends on the server route response shape.
-- Validate with the API checks after T1 and the web tests, lint, and typecheck after T2 and T3. Finish with the repository's API and web validation commands and a manual create/list/page/delete smoke check once deletion is implemented.
+- Validate with the API checks after T1 and the web tests, lint, and typecheck after T2 and T3. Finish with the repository's API and web validation commands and create/list/page/delete integration checks.
+
+## Completion evidence
+- T1–T3 are implemented. `ShortLinkService.listActive` returns domain summaries; `UrlsController` maps them to the generated API response model.
+- `ShortLinkListingTests` covers ordering, tie-breaking, deleted-link exclusion, and empty results. Web route tests cover pagination and clamping over the unchanged API collection.
+- UI state is managed by `useShortLinks`; `ShortLinkList` renders its results. Tests cover navigation, refresh from page two after creation, stale-request cancellation, and page clamping after deletion.
+- API checks, frontend tests/lint/typecheck/build, and the two Playwright lifecycle/creation scenarios passed on 2026-10-18. The pagination assertions are in the frontend tests; the Playwright scenarios do not exercise multi-page navigation.
