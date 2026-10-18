@@ -25,9 +25,13 @@ class ShortLinkListingTests {
         .thenReturn(List.of(oldLink, tiedLaterAlias, deletedLink, tiedEarlierAlias));
     ShortLinkService service = service(repository);
 
-    List<String> aliases = service.listActive().stream().map(entry -> entry.getAlias()).toList();
+    List<String> aliases = service.listActive().stream().map(ShortLinkSummary::alias).toList();
 
     assertEquals(List.of("alpha", "zebra", "old"), aliases);
+    assertEquals(
+        new ShortLinkSummary(
+            "alpha", URI.create("https://example.com/alpha"), URI.create("http://sho.rt/alpha")),
+        service.listActive().getFirst());
   }
 
   @Test

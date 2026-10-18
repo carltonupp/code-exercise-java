@@ -12,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.tpximpact.urlshortener.shortlink.AliasGenerationExhaustedException;
+import com.tpximpact.urlshortener.shortlink.AliasInUseException;
+import com.tpximpact.urlshortener.shortlink.InvalidShortLinkException;
 import com.tpximpact.urlshortener.shortlink.ShortLinkService;
 import java.net.URI;
 import org.junit.jupiter.api.Test;
@@ -42,7 +45,7 @@ class ApiProblemHandlerTests {
 
   @Test
   void aliasConflictUsesStableProblemType() throws Exception {
-    when(service.create(any(), any())).thenThrow(ApiProblems.aliasInUse());
+    when(service.create(any(), any())).thenThrow(new AliasInUseException());
 
     expectProblem(
             """
@@ -58,9 +61,20 @@ class ApiProblemHandlerTests {
 
   @Test
   void generatedAliasExhaustionUsesServiceUnavailableProblem() throws Exception {
-    when(service.create(any(), any())).thenThrow(ApiProblems.aliasGenerationExhausted());
+    when(service.create(any(), any())).thenThrow(new AliasGenerationExhaustedException());
 
     expectProblem("{\"fullUrl\":\"https://example.com\"}", "alias-generation-exhausted", 503);
+  }
+
+  @Test
+  void serviceValidationMapsToFieldValidationProblem() throws Exception {
+    when(service.create(any(), any()))
+        .thenThrow(
+            new InvalidShortLinkException("fullUrl", "Must be an absolute HTTP or HTTPS URL."));
+
+    expectProblem("{\"fullUrl\":\"ftp://example.com\"}", "validation-failed", 400)
+        .andExpect(jsonPath("$.errors[0].field").value("fullUrl"))
+        .andExpect(jsonPath("$.errors[0].message").value("Must be an absolute HTTP or HTTPS URL."));
   }
 
   @Test

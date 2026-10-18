@@ -1,6 +1,10 @@
 package com.tpximpact.urlshortener.api;
 
 import com.tpximpact.urlshortener.generated.model.ValidationError;
+import com.tpximpact.urlshortener.shortlink.AliasGenerationExhaustedException;
+import com.tpximpact.urlshortener.shortlink.AliasInUseException;
+import com.tpximpact.urlshortener.shortlink.AliasNotFoundException;
+import com.tpximpact.urlshortener.shortlink.InvalidShortLinkException;
 import java.net.URI;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -8,6 +12,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,6 +22,37 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 @RestControllerAdvice
 public class ApiProblemHandler extends ResponseEntityExceptionHandler {
+  @ExceptionHandler(InvalidShortLinkException.class)
+  public ResponseEntity<Object> handleInvalidShortLink(
+      InvalidShortLinkException exception, WebRequest request) {
+    return handleApiProblem(
+        exception, ApiProblems.invalidField(exception.getField(), exception.getMessage()), request);
+  }
+
+  @ExceptionHandler(AliasInUseException.class)
+  public ResponseEntity<Object> handleAliasInUse(
+      AliasInUseException exception, WebRequest request) {
+    return handleApiProblem(exception, ApiProblems.aliasInUse(), request);
+  }
+
+  @ExceptionHandler(AliasGenerationExhaustedException.class)
+  public ResponseEntity<Object> handleAliasGenerationExhausted(
+      AliasGenerationExhaustedException exception, WebRequest request) {
+    return handleApiProblem(exception, ApiProblems.aliasGenerationExhausted(), request);
+  }
+
+  @ExceptionHandler(AliasNotFoundException.class)
+  public ResponseEntity<Object> handleAliasNotFound(
+      AliasNotFoundException exception, WebRequest request) {
+    return handleApiProblem(exception, ApiProblems.aliasNotFound(), request);
+  }
+
+  private ResponseEntity<Object> handleApiProblem(
+      Exception exception, ErrorResponseException problem, WebRequest request) {
+    return handleExceptionInternal(
+        exception, problem.getBody(), problem.getHeaders(), problem.getStatusCode(), request);
+  }
+
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
       MethodArgumentNotValidException exception,

@@ -1,7 +1,5 @@
 package com.tpximpact.urlshortener.shortlink;
 
-import com.tpximpact.urlshortener.api.ApiProblems;
-import com.tpximpact.urlshortener.generated.model.UrlEntry;
 import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import java.net.URI;
 import java.util.Comparator;
@@ -48,7 +46,7 @@ public class ShortLinkService {
     return createGeneratedAlias(fullUrl);
   }
 
-  public List<UrlEntry> listActive() {
+  public List<ShortLinkSummary> listActive() {
     return repository.findAll().stream()
         .filter(shortUrl -> !shortUrl.isDeleted())
         .sorted(
@@ -57,7 +55,7 @@ public class ShortLinkService {
                 .thenComparing(ShortUrl::getAliasKey))
         .map(
             shortUrl ->
-                new UrlEntry(
+                new ShortLinkSummary(
                     shortUrl.getAlias(), shortUrl.getFullUrl(), shortUrlFor(shortUrl.getAlias())))
         .toList();
   }
@@ -89,13 +87,13 @@ public class ShortLinkService {
         || fullUrl.getHost() == null
         || !("http".equalsIgnoreCase(fullUrl.getScheme())
             || "https".equalsIgnoreCase(fullUrl.getScheme()))) {
-      throw ApiProblems.invalidField("fullUrl", "Must be an absolute HTTP or HTTPS URL.");
+      throw new InvalidShortLinkException("fullUrl", "Must be an absolute HTTP or HTTPS URL.");
     }
   }
 
   private void validateAlias(String alias) {
     if (!ALIAS_PATTERN.matcher(alias).matches()) {
-      throw ApiProblems.invalidField(
+      throw new InvalidShortLinkException(
           "customAlias", "Must contain 3–16 ASCII letters, numbers, or hyphens.");
     }
   }
@@ -103,13 +101,13 @@ public class ShortLinkService {
   private void saveCustomAlias(String alias, URI fullUrl) {
     String aliasKey = canonicalAlias(alias);
     if (repository.existsById(aliasKey)) {
-      throw ApiProblems.aliasInUse();
+      throw new AliasInUseException();
     }
     try {
       repository.saveAndFlush(new ShortUrl(aliasKey, alias, fullUrl));
     } catch (DataIntegrityViolationException exception) {
       if (repository.existsById(aliasKey)) {
-        throw ApiProblems.aliasInUse();
+        throw new AliasInUseException();
       }
       throw exception;
     }
@@ -137,7 +135,7 @@ public class ShortLinkService {
       }
     }
 
-    throw ApiProblems.aliasGenerationExhausted();
+    throw new AliasGenerationExhaustedException();
   }
 
   private URI shortUrlFor(String alias) {

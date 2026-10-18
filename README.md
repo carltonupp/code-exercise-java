@@ -50,6 +50,8 @@ Run the API and frontend in separate terminals with `mise run api` and `mise run
 
 The UI and API are separate applications. The browser talks to the Next.js app; its server routes proxy create, list, and delete requests to the Spring Boot API. Short links use the web app’s public origin. For a browser visit, the web app asks the API to resolve the alias, forwards active-link redirects, and renders the deleted or not-found page itself.
 
+The API controllers follow the three OpenAPI groups: creation, URL listing/deletion, and redirects. Controllers map request and response models and choose HTTP responses. The short-link service owns validation rules, alias allocation, listing order, deletion, and resolution; it returns domain data and raises domain exceptions. `ApiProblemHandler` maps those exceptions to the shared Problem Details responses, keeping HTTP statuses and generated API models out of the service layer.
+
 ```mermaid
 flowchart LR
     Visitor[Browser]

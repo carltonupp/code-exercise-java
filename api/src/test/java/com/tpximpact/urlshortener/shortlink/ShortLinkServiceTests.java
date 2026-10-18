@@ -11,7 +11,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.tpximpact.urlshortener.generated.model.ValidationError;
 import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.net.URI;
@@ -20,8 +19,6 @@ import java.util.Optional;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.ErrorResponseException;
 
 class ShortLinkServiceTests {
   @Test
@@ -53,13 +50,11 @@ class ShortLinkServiceTests {
     ShortLinkService service = service(repository);
 
     for (String alias : List.of("", "ab", "a".repeat(17), "has_underscore", "ééé")) {
-      ErrorResponseException exception =
+      InvalidShortLinkException exception =
           assertThrows(
-              ErrorResponseException.class,
+              InvalidShortLinkException.class,
               () -> service.create(URI.create("https://example.com"), alias));
-      assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-      assertEquals(
-          URI.create("urn:urlshortener:problem:validation-failed"), exception.getBody().getType());
+      assertEquals("customAlias", exception.getField());
     }
 
     org.mockito.Mockito.verifyNoInteractions(repository);
@@ -88,7 +83,7 @@ class ShortLinkServiceTests {
         new URI[] {
           null, URI.create("/relative"), URI.create("ftp://example.com"), URI.create("http:/")
         }) {
-      assertThrows(ErrorResponseException.class, () -> service.create(destination, null));
+      assertThrows(InvalidShortLinkException.class, () -> service.create(destination, null));
     }
 
     org.mockito.Mockito.verifyNoInteractions(repository);
@@ -102,13 +97,9 @@ class ShortLinkServiceTests {
         .thenThrow(new DataIntegrityViolationException("concurrent insert"));
     ShortLinkService service = service(repository);
 
-    ErrorResponseException exception =
-        assertThrows(
-            ErrorResponseException.class,
-            () -> service.create(URI.create("https://example.com"), "Taken"));
-
-    assertEquals(
-        URI.create("urn:urlshortener:problem:alias-in-use"), exception.getBody().getType());
+    assertThrows(
+        AliasInUseException.class,
+        () -> service.create(URI.create("https://example.com"), "Taken"));
   }
 
   @Test
@@ -198,7 +189,7 @@ class ShortLinkServiceTests {
   }
 
   @Test
-  void invalidDestinationIncludesProblemTypeAndFieldError() {
+  void invalidDestinationIdentifiesFieldAndReason() {
     ShortLinkService service =
         new ShortLinkService(
             mock(ShortUrlRepository.class),
@@ -207,21 +198,17 @@ class ShortLinkServiceTests {
             "http://sho.rt",
             mock(ShortLinkDeletionTransaction.class));
 
-    ErrorResponseException exception =
+    InvalidShortLinkException exception =
         assertThrows(
-            ErrorResponseException.class,
+            InvalidShortLinkException.class,
             () -> service.create(URI.create("ftp://example.com"), null));
 
-    assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-    assertEquals(
-        URI.create("urn:urlshortener:problem:validation-failed"), exception.getBody().getType());
-    assertEquals(
-        List.of(new ValidationError("fullUrl", "Must be an absolute HTTP or HTTPS URL.")),
-        exception.getBody().getProperties().get("errors"));
+    assertEquals("fullUrl", exception.getField());
+    assertEquals("Must be an absolute HTTP or HTTPS URL.", exception.getMessage());
   }
 
   @Test
-  void exhaustedGenerationIncludesStableProblemType() {
+  void exhaustedGenerationReportsAllocationFailure() {
     ShortUrlRepository repository = mock(ShortUrlRepository.class);
     when(repository.existsById("aaaaaaaa")).thenReturn(true);
     ShortLinkService service =
@@ -232,15 +219,9 @@ class ShortLinkServiceTests {
             "http://sho.rt",
             mock(ShortLinkDeletionTransaction.class));
 
-    ErrorResponseException exception =
-        assertThrows(
-            ErrorResponseException.class,
-            () -> service.create(URI.create("https://example.com"), null));
-
-    assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
-    assertEquals(
-        URI.create("urn:urlshortener:problem:alias-generation-exhausted"),
-        exception.getBody().getType());
+    assertThrows(
+        AliasGenerationExhaustedException.class,
+        () -> service.create(URI.create("https://example.com"), null));
   }
 
   private ShortLinkService service(ShortUrlRepository repository) {

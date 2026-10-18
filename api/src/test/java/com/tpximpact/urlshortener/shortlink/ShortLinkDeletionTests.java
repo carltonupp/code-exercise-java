@@ -13,8 +13,6 @@ import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import java.net.URI;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.ErrorResponseException;
 
 class ShortLinkDeletionTests {
   @Test
@@ -32,7 +30,7 @@ class ShortLinkDeletionTests {
   }
 
   @Test
-  void deletingUnknownOrAlreadyDeletedAliasReturnsNotFound() {
+  void deletingUnknownOrAlreadyDeletedAliasReportsNotFound() {
     ShortUrlRepository repository = mock(ShortUrlRepository.class);
     when(repository.findById("missing")).thenReturn(Optional.empty());
     ShortUrl deleted = new ShortUrl("gone", "Gone", URI.create("https://example.com"));
@@ -40,13 +38,9 @@ class ShortLinkDeletionTests {
     when(repository.findById("gone")).thenReturn(Optional.of(deleted));
     ShortLinkDeletionTransaction transaction = new ShortLinkDeletionTransaction(repository);
 
-    ErrorResponseException unknown =
-        assertThrows(ErrorResponseException.class, () -> transaction.delete("missing"));
-    ErrorResponseException repeated =
-        assertThrows(ErrorResponseException.class, () -> transaction.delete("gone"));
-
-    assertEquals(HttpStatus.NOT_FOUND, unknown.getStatusCode());
-    assertEquals(HttpStatus.NOT_FOUND, repeated.getStatusCode());
+    assertThrows(AliasNotFoundException.class, () -> transaction.delete("missing"));
+    assertThrows(AliasNotFoundException.class, () -> transaction.delete("gone"));
+    verify(repository, never()).saveAndFlush(any(ShortUrl.class));
   }
 
   @Test
@@ -72,13 +66,9 @@ class ShortLinkDeletionTests {
     when(repository.existsById("gone")).thenReturn(true);
     ShortLinkService service = service(repository);
 
-    ErrorResponseException exception =
-        assertThrows(
-            ErrorResponseException.class,
-            () -> service.create(URI.create("https://example.com/new"), "GONE"));
-
-    assertEquals(
-        URI.create("urn:urlshortener:problem:alias-in-use"), exception.getBody().getType());
+    assertThrows(
+        AliasInUseException.class,
+        () -> service.create(URI.create("https://example.com/new"), "GONE"));
     verify(repository, never()).saveAndFlush(any(ShortUrl.class));
   }
 

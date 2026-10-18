@@ -1,6 +1,5 @@
 package com.tpximpact.urlshortener.shortlink;
 
-import com.tpximpact.urlshortener.api.ApiProblems;
 import com.tpximpact.urlshortener.persistence.ShortUrlRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +14,9 @@ public class ShortLinkDeletionTransaction {
 
   @Transactional
   public void delete(String aliasKey) {
-    ShortUrl shortUrl = repository.findById(aliasKey).orElseThrow(ApiProblems::aliasNotFound);
+    ShortUrl shortUrl = repository.findById(aliasKey).orElseThrow(AliasNotFoundException::new);
     if (shortUrl.isDeleted()) {
-      throw ApiProblems.aliasNotFound();
+      throw new AliasNotFoundException();
     }
     shortUrl.markDeleted();
     repository.saveAndFlush(shortUrl);
