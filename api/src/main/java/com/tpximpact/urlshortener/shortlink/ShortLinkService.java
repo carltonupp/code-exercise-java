@@ -62,9 +62,7 @@ public class ShortLinkService {
         .toList();
   }
 
-  @CacheEvict(
-      cacheNames = "alias-resolutions",
-      key = "#alias.toLowerCase(T(java.util.Locale).ROOT)")
+  @CacheEvict(cacheNames = "alias-resolutions", keyGenerator = "aliasKeyGenerator")
   public void delete(String alias) {
     String aliasKey = canonicalAlias(alias);
     deletionTransaction.delete(aliasKey);
@@ -72,7 +70,7 @@ public class ShortLinkService {
 
   @Cacheable(
       cacheNames = "alias-resolutions",
-      key = "#alias.toLowerCase(T(java.util.Locale).ROOT)",
+      keyGenerator = "aliasKeyGenerator",
       unless = "#result == null")
   public AliasResolution resolve(String alias) {
     String aliasKey = canonicalAlias(alias);
