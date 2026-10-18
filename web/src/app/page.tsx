@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useShortLinks } from "@/features/short-links/useShortLinks";
 import ConnectionStatus from "@/app/ConnectionStatus";
 import ShortLinkList from "@/app/ShortLinkList";
 import ShortLinkForm from "@/app/ShortLinkForm";
 
 export default function Home() {
-  const [refreshToken, setRefreshToken] = useState(0);
+  const links = useShortLinks();
 
   return (
     <main className="page-shell">
@@ -18,9 +18,9 @@ export default function Home() {
           Create a short link, then find and share it here whenever you need it.
         </p>
         <a className="links-shortcut" href="#view-links">View existing links ↓</a>
-        <ShortLinkForm onCreated={() => setRefreshToken((current) => current + 1)} />
+        <ShortLinkForm onCreated={links.refreshFromFirstPage} />
       </section>
-      <ShortLinkList key={refreshToken} refreshToken={refreshToken} />
+      <ShortLinkList links={links} />
     </main>
   );
 }

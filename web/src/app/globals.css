@@ -1,20 +1,3 @@
-:root {
-  color-scheme: light;
-  --ink: #172b26;
-  --muted: #60716b;
-  --green: #176b52;
-  --paper: #f7f8f4;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
-}
-
 .page-shell {
   min-height: 100vh;
   display: flex;
@@ -25,7 +8,7 @@ body {
   background: radial-gradient(ellipse at 78% 10%, #e0eee5 0, transparent 36%), var(--paper);
 }
 
-.connection-status { position: fixed; top: 24px; right: 28px; display: inline-flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid #e2e8e1; border-radius: 999px; background: #fff; color: var(--muted); font-size: 12px; font-weight: 600; box-shadow: 0 8px 24px #274f380d; }
+.connection-status { position: fixed; top: 24px; right: 28px; display: inline-flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 999px; background: #fff; color: var(--muted); font-size: 12px; font-weight: 600; box-shadow: 0 8px 24px #274f380d; }
 .connection-dot { width: 9px; height: 9px; border-radius: 50%; background: #a5ada8; }
 .connection-status.connected .connection-dot { background: #16864f; animation: connection-blink 1.2s ease-in-out infinite; }
 .connection-status.disconnected .connection-dot { background: #cc3f3f; }
@@ -41,11 +24,11 @@ body {
 
 .intro { width: min(100%, 720px); }
 .eyebrow { color: var(--green); font-size: 12px; font-weight: 700; letter-spacing: .18em; }
-h1 { margin: 22px 0 12px; font: 800 clamp(3.2rem, 8vw, 6.3rem)/.98 "Avenir Next", Avenir, "Segoe UI", sans-serif; letter-spacing: -.075em; }
+h1 { margin: 22px 0 12px; font: 800 clamp(3.2rem, 8vw, 6.3rem)/.98 var(--font-sans); letter-spacing: -.075em; }
 .description { max-width: 500px; color: var(--muted); font-size: 18px; line-height: 1.65; }
 .links-shortcut { display: inline-block; margin-top: 4px; color: var(--green); font-size: 14px; font-weight: 700; text-decoration-thickness: 1px; text-underline-offset: 4px; }
 .links-shortcut:hover { color: #0f513d; }
-.shorten-form { margin-top: 54px; padding: 26px; border: 1px solid #e2e8e1; border-radius: 18px; background: #fff; box-shadow: 0 18px 55px #274f3810; }
+.shorten-form { margin-top: 54px; padding: 26px; border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: 0 18px 55px #274f3810; }
 .form-field { margin-bottom: 20px; }
 label { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 700; }
 label span { color: var(--muted); font-weight: 400; }
@@ -53,7 +36,7 @@ label span { color: var(--muted); font-weight: 400; }
 .form-field input:focus { outline: 3px solid #176b5233; border-color: var(--green); }
 .field-help { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .form-row { display: flex; gap: 12px; }
-button { min-height: 48px; padding: 0 20px; border: 0; border-radius: 9px; background: var(--green); color: white; font: 600 14px "Avenir Next", Avenir, "Segoe UI", sans-serif; cursor: pointer; }
+button { min-height: 48px; padding: 0 20px; border: 0; border-radius: 9px; background: var(--green); color: white; font: 600 14px var(--font-sans); cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 .form-error { margin: 0 0 18px; color: #a22b2b; font-size: 14px; line-height: 1.5; }
 .short-link-result { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; padding: 22px 26px; border: 1px solid #b6d7c6; border-radius: 14px; background: #eff8f1; }
@@ -68,7 +51,7 @@ code { color: var(--green); }
 .link-list-heading h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -.04em; }
 .result-count { margin: 0 0 3px; color: var(--muted); font-size: 14px; }
 .link-entries { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.link-entry { display: grid; grid-template-columns: minmax(110px, .7fr) minmax(180px, 1fr) minmax(240px, 1.6fr) auto; gap: 20px; padding: 20px; border: 1px solid #e2e8e1; border-radius: 14px; background: #fff; box-shadow: 0 10px 32px #274f3808; }
+.link-entry { display: grid; grid-template-columns: minmax(110px, .7fr) minmax(180px, 1fr) minmax(240px, 1.6fr) auto; gap: 20px; padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: #fff; box-shadow: 0 10px 32px #274f3808; }
 .link-entry-alias, .link-entry-value { display: grid; align-content: start; gap: 7px; min-width: 0; }
 .link-entry-alias span, .link-entry-value span { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .link-entry-alias strong { overflow-wrap: anywhere; color: var(--green); }
@@ -77,7 +60,7 @@ code { color: var(--green); }
 .link-entry-actions { display: flex; align-items: center; justify-content: flex-end; }
 .delete-link-button { min-height: 40px; padding: 0 14px; background: #8f3333; }
 .delete-link-button:hover:not(:disabled) { background: #742727; }
-.list-message, .list-error, .empty-links { padding: 24px; border: 1px solid #e2e8e1; border-radius: 14px; background: #fff; }
+.list-message, .list-error, .empty-links { padding: 24px; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
 .list-message { color: var(--muted); }
 .list-error { color: #a22b2b; }
 .list-success { color: var(--green); font-size: 14px; font-weight: 600; }

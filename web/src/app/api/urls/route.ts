@@ -1,63 +1,17 @@
 import { NextResponse } from "next/server";
-import { createApiClient, type Problem, type UrlEntry } from "@/api";
+import { isUrlEntry } from "@/api/validation";
+import type { LinkListResponse } from "@/features/short-links/types";
+import { apiClient, apiRequestOptions } from "@/server/api";
+import {
+  invalidUpstreamResponse,
+  problemResponse,
+  upstreamFailureResponse,
+  upstreamProblemResponse,
+} from "@/server/problems";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
-
-function apiBaseUrl() {
-  return (process.env.API_BASE_URL ?? "http://localhost:8080").replace(/\/+$/, "");
-}
-
-function problemResponse(
-  request: Request,
-  name: string,
-  status: number,
-  title: string,
-  detail: string,
-) {
-  const problem: Problem = {
-    type: `urn:urlshortener:problem:${name}`,
-    title,
-    status,
-    detail,
-    instance: new URL(request.url).pathname,
-  };
-  return NextResponse.json(problem, {
-    status,
-    headers: { "Content-Type": "application/problem+json" },
-  });
-}
-
-function isProblem(body: unknown): body is Problem {
-  return (
-    typeof body === "object" && body !== null &&
-    "type" in body && typeof body.type === "string" &&
-    "title" in body && typeof body.title === "string" &&
-    "status" in body && Number.isInteger(body.status) &&
-    "detail" in body && typeof body.detail === "string" &&
-    "instance" in body && typeof body.instance === "string"
-  );
-}
-
-function isUrlEntry(value: unknown): value is UrlEntry {
-  return (
-    typeof value === "object" && value !== null &&
-    "alias" in value && typeof value.alias === "string" &&
-    "fullUrl" in value && typeof value.fullUrl === "string" &&
-    "shortUrl" in value && typeof value.shortUrl === "string"
-  );
-}
-
-function invalidUpstreamResponse(request: Request) {
-  return problemResponse(
-    request,
-    "invalid-upstream-response",
-    502,
-    "Invalid service response",
-    "The short link service returned an unexpected response. Please try again.",
-  );
-}
 
 function requestedPage(request: Request): number | null {
   const values = new URL(request.url).searchParams.getAll("page");
@@ -80,19 +34,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data, error, response } = await createApiClient(apiBaseUrl()).GET("/urls", {
-      cache: "no-store",
-      signal: AbortSignal.timeout(5000),
+    const { data, error, response } = await apiClient().GET("/urls", {
+      ...apiRequestOptions(),
     });
     if (response.status !== 200) {
-      const upstreamError: unknown = error;
-      if (!response.ok && isProblem(upstreamError) && upstreamError.status === response.status) {
-        return NextResponse.json(upstreamError, {
-          status: response.status,
-          headers: { "Content-Type": "application/problem+json" },
-        });
-      }
-      return invalidUpstreamResponse(request);
+      return upstreamProblemResponse(error, response) ?? invalidUpstreamResponse(request);
     }
     if (!Array.isArray(data) || !data.every(isUrlEntry)) {
       return invalidUpstreamResponse(request);
@@ -109,17 +55,10 @@ export async function GET(request: Request) {
         totalPages,
         totalItems,
         pageSize: PAGE_SIZE,
-      },
+      } satisfies LinkListResponse,
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    if (error instanceof SyntaxError) return invalidUpstreamResponse(request);
-    return problemResponse(
-      request,
-      "service-unavailable",
-      503,
-      "Service unavailable",
-      "The short link service is unavailable. Please try again.",
-    );
+    return upstreamFailureResponse(request, error);
   }
 }

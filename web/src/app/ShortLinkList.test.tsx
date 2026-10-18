@@ -1,6 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import ShortLinkList from "./ShortLinkList";
+import ShortLinkListView from "./ShortLinkList";
+import { useShortLinks } from "@/features/short-links/useShortLinks";
+
+function ShortLinkList() {
+  const links = useShortLinks();
+  return <>
+    <button onClick={links.refreshFromFirstPage}>Refresh links</button>
+    <ShortLinkListView links={links} />
+  </>;
+}
 
 function listResponse(
   items: { alias: string; fullUrl: string; shortUrl: string }[],
@@ -111,18 +120,64 @@ describe("ShortLinkList", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("The link list is unavailable.");
   });
 
-  it("reloads the first page when the refresh token changes", async () => {
+  it("explicitly refreshes page one after navigating to page two", async () => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(listResponse([], 1, 0, 0))
-      .mockResolvedValueOnce(listResponse([firstLink]));
+      .mockResolvedValueOnce(listResponse([firstLink], 1, 2, 21))
+      .mockResolvedValueOnce(listResponse([{ ...firstLink, alias: "last-link" }], 2, 2, 21))
+      .mockResolvedValueOnce(listResponse([firstLink], 1, 2, 22));
     vi.stubGlobal("fetch", fetchMock);
-    const { rerender } = render(<ShortLinkList refreshToken={0} />);
-    await screen.findByText("No active links yet");
+    render(<ShortLinkList />);
+    await screen.findByText("first-link");
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("last-link");
 
-    rerender(<ShortLinkList refreshToken={1} />);
+    fireEvent.click(screen.getByRole("button", { name: "Refresh links" }));
 
     expect(await screen.findByText("first-link")).toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/urls?page=1", expect.anything());
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("ignores a superseded request even if it completes after the fresh result", async () => {
+    let finishStale!: (response: Response) => void;
+    const stale = new Promise<Response>((resolve) => { finishStale = resolve; });
+    const fetchMock = vi.fn()
+      .mockReturnValueOnce(stale)
+      .mockResolvedValueOnce(listResponse([{ ...firstLink, alias: "fresh-link" }]));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<ShortLinkList />);
+    fireEvent.click(screen.getByRole("button", { name: "Refresh links" }));
+    await screen.findByText("fresh-link");
+
+    await act(async () => finishStale(listResponse([firstLink])));
+
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+    expect(screen.getByText("fresh-link")).toBeInTheDocument();
+    expect(screen.queryByText("first-link")).not.toBeInTheDocument();
+  });
+
+  it("accepts a clamped page after deletion and uses it for subsequent reloads", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(listResponse([firstLink], 1, 2, 21))
+      .mockResolvedValueOnce(listResponse([{ ...firstLink, alias: "last-link" }], 2, 2, 21))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(listResponse([firstLink], 1, 1, 20))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(listResponse([], 1, 0, 0));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<ShortLinkList />);
+    await screen.findByText("first-link");
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("last-link");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await screen.findByText("Page 1 of 1");
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "/api/urls?page=2", expect.anything());
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await screen.findByText("No active links yet");
+    expect(fetchMock).toHaveBeenNthCalledWith(6, "/api/urls?page=1", expect.anything());
   });
 
   it("deletes immediately, shows success, and removes the link from the active list", async () => {

@@ -1,48 +1,20 @@
 import { NextResponse } from "next/server";
-import { createApiClient, type Problem } from "@/api";
+import { isValidAlias } from "@/features/short-links/validation";
+import { apiClient, apiRequestOptions } from "@/server/api";
+import {
+  invalidUpstreamResponse,
+  problemResponse,
+  upstreamFailureResponse,
+  upstreamProblemResponse,
+} from "@/server/problems";
 
 export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ alias: string }> };
 
-function apiBaseUrl() {
-  return (process.env.API_BASE_URL ?? "http://localhost:8080").replace(/\/+$/, "");
-}
-
-function problemResponse(
-  request: Request,
-  name: string,
-  status: number,
-  title: string,
-  detail: string,
-) {
-  const problem: Problem = {
-    type: `urn:urlshortener:problem:${name}`,
-    title,
-    status,
-    detail,
-    instance: new URL(request.url).pathname,
-  };
-  return NextResponse.json(problem, {
-    status,
-    headers: { "Content-Type": "application/problem+json" },
-  });
-}
-
-function isProblem(body: unknown): body is Problem {
-  return (
-    typeof body === "object" && body !== null &&
-    "type" in body && typeof body.type === "string" &&
-    "title" in body && typeof body.title === "string" &&
-    "status" in body && Number.isInteger(body.status) &&
-    "detail" in body && typeof body.detail === "string" &&
-    "instance" in body && typeof body.instance === "string"
-  );
-}
-
 export async function DELETE(request: Request, { params }: RouteContext) {
   const { alias } = await params;
-  if (!/^[A-Za-z0-9-]{3,16}$/.test(alias)) {
+  if (!isValidAlias(alias)) {
     return problemResponse(
       request,
       "invalid-alias",
@@ -53,20 +25,14 @@ export async function DELETE(request: Request, { params }: RouteContext) {
   }
 
   try {
-    const { error, response } = await createApiClient(apiBaseUrl()).DELETE("/{alias}", {
+    const { error, response } = await apiClient().DELETE("/{alias}", {
       params: { path: { alias } },
-      cache: "no-store",
-      signal: AbortSignal.timeout(5000),
+      ...apiRequestOptions(),
     });
     if (response.status === 204) return new NextResponse(null, { status: 204 });
 
-    const upstreamError: unknown = error;
-    if (!response.ok && isProblem(upstreamError) && upstreamError.status === response.status) {
-      return NextResponse.json(upstreamError, {
-        status: response.status,
-        headers: { "Content-Type": "application/problem+json" },
-      });
-    }
+    const problem = upstreamProblemResponse(error, response);
+    if (problem) return problem;
     if (response.status === 404) {
       return problemResponse(
         request,
@@ -76,20 +42,8 @@ export async function DELETE(request: Request, { params }: RouteContext) {
         "No active link exists for this alias.",
       );
     }
-    return problemResponse(
-      request,
-      "invalid-upstream-response",
-      502,
-      "Invalid service response",
-      "The short link service returned an unexpected response. Please try again.",
-    );
-  } catch {
-    return problemResponse(
-      request,
-      "service-unavailable",
-      503,
-      "Service unavailable",
-      "The short link service is unavailable. Please try again.",
-    );
+    return invalidUpstreamResponse(request);
+  } catch (error) {
+    return upstreamFailureResponse(request, error);
   }
 }

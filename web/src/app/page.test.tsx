@@ -59,4 +59,45 @@ describe("Home link workspace", () => {
       cache: "no-store",
     }));
   });
+
+  it("returns to page one after creation while viewing page two", async () => {
+    let created = false;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/health") {
+        return new Response(JSON.stringify({ connected: true }));
+      }
+      if (url === "/api/shorten" && init?.method === "POST") {
+        created = true;
+        return new Response(JSON.stringify({ shortUrl: "http://sho.rt/new-link" }), { status: 201 });
+      }
+      const currentPage = url === "/api/urls?page=2" ? 2 : 1;
+      const alias = currentPage === 2 ? "last-link" : created ? "new-link" : "first-link";
+      return new Response(JSON.stringify({
+        items: [{ alias, fullUrl: "https://example.com/page", shortUrl: `http://sho.rt/${alias}` }],
+        currentPage, totalPages: 2, totalItems: created ? 22 : 21, pageSize: 20,
+      }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<Home />);
+    await screen.findByText("first-link");
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Page 2 of 2");
+    const previousListSignal = fetchMock.mock.calls
+      .find(([url]) => url === "/api/urls?page=2")?.[1]?.signal;
+
+    fireEvent.change(screen.getByLabelText("Long URL"), {
+      target: { value: "https://example.com/new" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create short link" }));
+
+    await screen.findByText("new-link");
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(screen.getByText("22 results")).toBeInTheDocument();
+    expect(screen.queryByText("last-link")).not.toBeInTheDocument();
+    expect(previousListSignal?.aborted).toBe(true);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).startsWith("/api/urls?page=")))
+      .toHaveLength(3);
+  });
+
 });

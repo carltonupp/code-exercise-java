@@ -17,5 +17,6 @@ ENV NODE_ENV=production
 COPY --from=build /workspace/web/package.json ./package.json
 COPY --from=build /workspace/web/node_modules ./node_modules
 COPY --from=build /workspace/web/.next ./.next
+COPY --from=build /workspace/web/public ./public
 EXPOSE 3000
 CMD ["npm", "run", "start", "--", "--hostname", "0.0.0.0"]

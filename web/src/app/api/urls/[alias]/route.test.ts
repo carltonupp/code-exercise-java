@@ -88,4 +88,16 @@ describe("DELETE /api/urls/[alias]", () => {
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual(problem);
   });
+
+  it("treats malformed upstream JSON as a bad gateway response", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("not json", { status: 500 })));
+
+    const response = await DELETE(request("alias"), context("alias"));
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toMatchObject({
+      type: "urn:urlshortener:problem:invalid-upstream-response",
+    });
+  });
+
 });

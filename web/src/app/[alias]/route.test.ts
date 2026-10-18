@@ -37,10 +37,27 @@ describe("GET /[alias]", () => {
     const response = await GET(request("My-Link"), context("My-Link"));
 
     expect(fetchMock.mock.calls[0][0]).toBe("http://api.internal:8080/My-Link");
-    expect(fetchMock.mock.calls[0][1]).toMatchObject({ cache: "no-store", redirect: "manual" });
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      cache: "no-store", redirect: "manual", signal: expect.any(AbortSignal),
+    });
     expect(response.status).toBe(302);
     expect(response.headers.get("Location")).toBe("https://example.com/page");
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("bounds resolution with a timeout and renders the unavailable page on expiry", async () => {
+    const controller = new AbortController();
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new DOMException("Expired", "TimeoutError")));
+    try {
+      const response = await GET(request("slow-link"), context("slow-link"));
+
+      expect(timeout).toHaveBeenCalledWith(5000);
+      expect(response.status).toBe(503);
+      expect(await response.text()).toContain("We can&#39;t open this link right now");
+    } finally {
+      timeout.mockRestore();
+    }
   });
 
   it("shows a temporary error when an upstream redirect has no destination", async () => {

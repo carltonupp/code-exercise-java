@@ -70,6 +70,8 @@ flowchart LR
     Web -->|Active alias: redirect to destination| Visitor
 ```
 
+Frontend routes share backend configuration, timeouts, and Problem Details handling through `web/src/server/`. The resolution adapter isolates the existing API's title-based distinction between deleted and unknown links; the OpenAPI contract is unchanged. Browser requests and UI state live in `web/src/features/short-links/`, with explicit list refresh after creation and deletion. React pages and standalone resolution responses use the same base stylesheet in `web/public/styles/shared.css`.
+
 The API caches known active and deleted aliases for up to 60 seconds, with a 10,000-entry limit. Unknown aliases are not cached. The cache is local to each API process. A lookup racing with deletion can briefly repopulate an active result after deletion evicts it; that result can remain until its cache entry expires.
 
 See the [Azure hosting proposal](./docs/architecture/azure-hosting.md) for a production deployment design using Application Gateway, containerized App Services, Azure SQL, private networking, and Azure Monitor.

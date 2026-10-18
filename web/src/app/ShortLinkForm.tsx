@@ -1,51 +1,16 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import type { Problem, ShortenResponse, ValidationError } from "@/api";
-
-function normalizeDestination(value: string) {
-  const trimmedValue = value.trim();
-  if (!trimmedValue) return null;
-
-  const hasScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmedValue);
-  const candidate = hasScheme ? trimmedValue : `https://${trimmedValue}`;
-  try {
-    const url = new URL(candidate);
-    if (
-      (url.protocol === "http:" || url.protocol === "https:") &&
-      isUsableHostname(url.hostname)
-    ) {
-      return url.toString();
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function isUsableHostname(hostname: string) {
-  const normalized = hostname.toLowerCase().replace(/\.$/, "");
-  if (normalized === "localhost" || (normalized.startsWith("[") && normalized.endsWith("]"))) {
-    return true;
-  }
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(normalized)) return true;
-
-  const labels = normalized.split(".");
-  return (
-    labels.length >= 2 &&
-    labels.every((label) => label.length > 0 && label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)) &&
-    labels[labels.length - 1].length >= 2
-  );
-}
+import { useCreateShortLink } from "@/features/short-links/useCreateShortLink";
 
 export default function ShortLinkForm({ onCreated }: { onCreated?: () => void }) {
-  const [fullUrl, setFullUrl] = useState("");
-  const [customAlias, setCustomAlias] = useState("");
-  const [shortUrl, setShortUrl] = useState("");
-  const [error, setError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<ValidationError[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    fullUrl, customAlias, shortUrl, error: requestError, fieldErrors, isSubmitting,
+    updateFullUrl, updateCustomAlias, create,
+  } = useCreateShortLink(onCreated);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
+  const error = copyError || requestError;
   const urlError = fieldErrors
     .filter((error) => error.field === "fullUrl")
     .map((error) => error.message)
@@ -55,63 +20,11 @@ export default function ShortLinkForm({ onCreated }: { onCreated?: () => void })
     .map((error) => error.message)
     .join(" ");
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
-    setFieldErrors([]);
-    setShortUrl("");
     setCopied(false);
-
-    const destination = normalizeDestination(fullUrl);
-    const alias = customAlias.trim();
-    if (!destination) {
-      setFieldErrors([
-        { field: "fullUrl", message: "Enter a complete web address, such as https://example.com." },
-      ]);
-      return;
-    }
-    if (alias && !/^[A-Za-z0-9-]{3,16}$/.test(alias)) {
-      setError("Custom aliases must be 3–16 letters, numbers, or hyphens.");
-      return;
-    }
-
-    setFullUrl(destination);
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/shorten", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullUrl: destination, ...(alias ? { customAlias: alias } : {}) }),
-      });
-      if (!response.ok) {
-        const problem = await response.json() as Problem;
-        switch (problem.type) {
-          case "urn:urlshortener:problem:alias-in-use":
-            setError("That alias is unavailable. Choose another one.");
-            break;
-          case "urn:urlshortener:problem:validation-failed":
-            setFieldErrors(problem.errors ?? []);
-            setError(problem.detail);
-            break;
-          default:
-            setError(problem.detail || "The short link could not be created. Please try again.");
-        }
-        return;
-      }
-      if (response.status !== 201) {
-        setError("The service returned an unexpected response. Please try again.");
-        return;
-      }
-      const result = await response.json() as ShortenResponse;
-      setShortUrl(result.shortUrl);
-      setFullUrl("");
-      setCustomAlias("");
-      onCreated?.();
-    } catch {
-      setError("The short link service is unavailable. Your entries are still here; try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setCopyError("");
+    void create();
   }
 
   async function copyShortUrl() {
@@ -119,7 +32,7 @@ export default function ShortLinkForm({ onCreated }: { onCreated?: () => void })
       await navigator.clipboard.writeText(shortUrl);
       setCopied(true);
     } catch {
-      setError("Could not copy the short link. You can select and copy it manually.");
+      setCopyError("Could not copy the short link. You can select and copy it manually.");
     }
   }
 
@@ -135,10 +48,7 @@ export default function ShortLinkForm({ onCreated }: { onCreated?: () => void })
             autoComplete="url"
             placeholder="https://example.com/your-long-link"
             value={fullUrl}
-            onChange={(event) => {
-              setFullUrl(event.target.value);
-              setFieldErrors((errors) => errors.filter((error) => error.field !== "fullUrl"));
-            }}
+            onChange={(event) => updateFullUrl(event.target.value)}
             required
             aria-invalid={Boolean(urlError)}
             aria-describedby={`url-help${urlError ? " url-error" : ""}`}
@@ -158,10 +68,7 @@ export default function ShortLinkForm({ onCreated }: { onCreated?: () => void })
             pattern="[A-Za-z0-9-]{3,16}"
             placeholder="your-alias"
             value={customAlias}
-            onChange={(event) => {
-              setCustomAlias(event.target.value);
-              setFieldErrors((errors) => errors.filter((error) => error.field !== "customAlias"));
-            }}
+            onChange={(event) => updateCustomAlias(event.target.value)}
             aria-invalid={Boolean(aliasError)}
             aria-describedby={`alias-help${aliasError ? " alias-error" : ""}`}
           />

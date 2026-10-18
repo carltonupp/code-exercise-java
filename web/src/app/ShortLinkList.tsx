@@ -1,104 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Problem, UrlEntry } from "@/api";
+import type { ShortLinksState } from "@/features/short-links/useShortLinks";
 
-type LinkListResponse = {
-  items: UrlEntry[];
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  pageSize: number;
-};
-
-function isLinkListResponse(value: unknown): value is LinkListResponse {
-  return (
-    typeof value === "object" && value !== null &&
-    "items" in value && Array.isArray(value.items) &&
-    "currentPage" in value && Number.isInteger(value.currentPage) &&
-    "totalPages" in value && Number.isInteger(value.totalPages) &&
-    "totalItems" in value && Number.isInteger(value.totalItems) &&
-    "pageSize" in value && Number.isInteger(value.pageSize)
-  );
-}
-
-function problemDetail(value: unknown) {
-  if (typeof value === "object" && value !== null && "detail" in value &&
-    typeof value.detail === "string") {
-    return (value as Problem).detail;
-  }
-  return "The link list could not be loaded. Please try again.";
-}
-
-export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: number }) {
-  const [page, setPage] = useState(1);
-  const [result, setResult] = useState<LinkListResponse | null>(null);
-  const [error, setError] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [deletingAlias, setDeletingAlias] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [reloadToken, setReloadToken] = useState(0);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadLinks() {
-      setIsLoading(true);
-      setError("");
-      try {
-        const response = await fetch(`/api/urls?page=${page}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const body: unknown = await response.json();
-        if (!response.ok) {
-          setError(problemDetail(body));
-          setResult(null);
-          return;
-        }
-        if (!isLinkListResponse(body)) {
-          setError("The link service returned an unexpected response.");
-          setResult(null);
-          return;
-        }
-        setResult(body);
-      } catch {
-        if (!controller.signal.aborted) {
-          setError("The link list is unavailable. Please try again.");
-          setResult(null);
-        }
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
-      }
-    }
-
-    void loadLinks();
-    return () => controller.abort();
-  }, [page, refreshToken, reloadToken]);
-
-  async function deleteLink(alias: string) {
-    setDeletingAlias(alias);
-    setActionError("");
-    setNotice("");
-    try {
-      const response = await fetch(`/api/urls/${encodeURIComponent(alias)}`, {
-        method: "DELETE",
-        cache: "no-store",
-      });
-      if (response.status !== 204) {
-        const body: unknown = await response.json().catch(() => null);
-        setActionError(problemDetail(body));
-        return;
-      }
-      setNotice(`Deleted ${alias}.`);
-      setReloadToken((current) => current + 1);
-    } catch {
-      setActionError("The link could not be deleted. Please try again.");
-    } finally {
-      setDeletingAlias("");
-    }
-  }
+export default function ShortLinkList({ links }: { links: ShortLinksState }) {
+  const {
+    result, error, actionError, notice, deletingAlias, isLoading, changePage, deleteLink,
+  } = links;
 
   return (
     <section className="link-list" aria-labelledby="view-links">
@@ -157,7 +64,7 @@ export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: num
             <button
               type="button"
               className="pagination-button"
-              onClick={() => setPage(result.currentPage - 1)}
+              onClick={() => changePage(result.currentPage - 1)}
               disabled={isLoading || result.currentPage <= 1}
             >
               Previous
@@ -166,7 +73,7 @@ export default function ShortLinkList({ refreshToken = 0 }: { refreshToken?: num
             <button
               type="button"
               className="pagination-button"
-              onClick={() => setPage(result.currentPage + 1)}
+              onClick={() => changePage(result.currentPage + 1)}
               disabled={isLoading || result.currentPage >= result.totalPages}
             >
               Next

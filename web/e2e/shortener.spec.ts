@@ -25,6 +25,10 @@ test("creates a custom link, redirects, then shows a tombstone after deletion", 
   const tombstone = await page.goto(`/${alias}`);
   expect(tombstone?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "This link has been retired" })).toBeVisible();
+  await expect(page.locator("body")).toHaveCSS("color", "rgb(23, 43, 38)");
+  const stylesheet = await request.get("/styles/shared.css");
+  expect(stylesheet.status()).toBe(200);
+  expect(stylesheet.headers()["content-type"]).toContain("text/css");
 });
 
 test("creates a generated alias and rejects an invalid custom alias", async ({ page }) => {

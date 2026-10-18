@@ -7,6 +7,9 @@ describe("renderLinkResolutionPage", () => {
 
     expect(html).toContain("This link has been retired");
     expect(html).toContain("LINK RETIRED");
+    expect(html).toContain('<link rel="stylesheet" href="/styles/shared.css">');
+    expect(html).toContain('<body class="resolution-page">');
+    expect(html).not.toContain("<style>");
     expect(html).not.toContain("<code class=\"alias\">/old-link</code>");
   });
 
